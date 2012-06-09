@@ -301,4 +301,61 @@ class ArrTest extends \PHPUnit_Framework_TestCase
             Arr::wrap(array(array(3, 4, 5), array(4, 6, 5)))->flatten()->raw()
         );
     }
+
+    public function testSort()
+    {
+        $sortable = Arr::w(array(
+            5 => 1,
+            4 => 2,
+            3 => 3,
+            2 => 4,
+            1 => 5,
+        ));
+
+        $this->assertEquals(
+            array(1, 2, 3, 4, 5),
+            $sortable->dup()->sort()->raw()
+        );
+        $this->assertEquals(
+            array(5 => 1, 4 => 2, 3 => 3, 2 => 4, 1 => 5),
+            $sortable->dup()->sort(true)->raw()
+        );
+    }
+
+    public function testSortBy()
+    {
+        $this->assertEquals(
+            array(
+                array('foo' => 3, 'bar' => 12),
+                array('foo' => 2, 'bar' => 10),
+                array('foo' => 1, 'bar' => 8),
+                array('foo' => 3, 'bar' => 6),
+                array('foo' => 2, 'bar' => 4),
+                array('foo' => 1, 'bar' => 2),
+            ),
+            $this->getNested()->sortBy(function ($x) { return -$x['bar']; })->raw()
+        );
+        $this->assertEquals(
+            array(
+                array('foo' => 1, 'bar' => 2),
+                array('foo' => 1, 'bar' => 8),
+                array('foo' => 2, 'bar' => 4),
+                array('foo' => 2, 'bar' => 10),
+                array('foo' => 3, 'bar' => 6),
+                array('foo' => 3, 'bar' => 12),
+            ),
+            $this->getNested()->sortBy(function ($x) { return array($x['foo'], $x['bar']); })->raw()
+        );
+        $this->assertEquals(
+            array(
+                array('foo' => 1, 'bar' => 2),
+                array('foo' => 2, 'bar' => 4),
+                array('foo' => 3, 'bar' => 6),
+                array('foo' => 1, 'bar' => 8),
+                array('foo' => 2, 'bar' => 10),
+                array('foo' => 3, 'bar' => 12),
+            ),
+            $this->getNested()->sortBy('bar')->raw()
+        );
+    }
 }

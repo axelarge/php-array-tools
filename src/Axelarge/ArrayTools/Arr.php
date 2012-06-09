@@ -253,8 +253,6 @@ class Arr implements \ArrayAccess
         return $this;
     }
 
-    // fromTo (like ruby's [3..5])
-
     /**
      * Returns the first $n elements or the last -$n elements if $n is negative
      *
@@ -654,7 +652,6 @@ class Arr implements \ArrayAccess
         return $this;
     }
 
-    // TODO Keys ?
     public function filter($callback = null)
     {
         $this->arr = array_filter($this->arr, $callback);
@@ -866,20 +863,40 @@ class Arr implements \ArrayAccess
         return $this;
     }
 
-
-    public function sort()
+    /**
+     * Sorts the array
+     *
+     * @param bool $preserveKeys
+     * @param int $mode Sort flags
+     * @return static
+     */
+    public function sort($preserveKeys = false, $mode = SORT_REGULAR)
     {
-        // TODO
+        $preserveKeys ? asort($this->arr, $mode) : sort($this->arr, $mode);
+        return $this;
     }
 
-    // TODO
-    public function sortBy($callback, $mode = SORT_REGULAR)
+    /**
+     * Sorts the array by a key or result of a callback
+     *
+     * @param string|\callback $callbackOrKey
+     * @param int $mode Sort flags
+     * @return static
+     */
+    public function sortBy($callbackOrKey, $mode = SORT_REGULAR)
     {
         $sortBy = array();
-        foreach ($this->arr as $element) {
-            $sortBy[] = $callback($element);
+        if (is_string($callbackOrKey)) {
+            foreach ($this->arr as $value) {
+                $sortBy[] = $value[$callbackOrKey];
+            }
+        } else {
+            foreach ($this->arr as $key => $value) {
+                $sortBy[] = $callbackOrKey($value, $key);
+            }
         }
-        array_multisort($this->arr, $mode, $sortBy);
+
+        array_multisort($sortBy, $mode, $this->arr);
 
         return $this;
     }

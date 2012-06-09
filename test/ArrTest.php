@@ -138,17 +138,11 @@ class ArrTest extends \PHPUnit_Framework_TestCase
     {
         $this->assertEquals(
             array(),
-            Arr::wrap(range(3, 8))->filter(function($x)
-            {
-                return $x < 3;
-            })->raw()
+            Arr::wrap(range(3, 8))->filter(function ($x) { return $x < 3; })->raw()
         );
         $this->assertEquals(
             array_values(array(3, 5, 7)),
-            array_values(Arr::wrap(range(3, 8))->filter(function($x)
-            {
-                return $x % 2;
-            })->raw())
+            array_values(Arr::wrap(range(3, 8))->filter(function ($x) { return $x % 2; })->raw())
         );
     }
 
@@ -156,10 +150,7 @@ class ArrTest extends \PHPUnit_Framework_TestCase
     {
         $this->assertEquals(
             array(4, 9, 16),
-            Arr::create(2, 3, 4)->map(function($x)
-            {
-                return $x * $x;
-            })->raw()
+            Arr::create(2, 3, 4)->map(function ($x) { return $x * $x; })->raw()
         );
     }
 
@@ -212,8 +203,7 @@ class ArrTest extends \PHPUnit_Framework_TestCase
                 'bar' => Arr::create(2, 4, 8),
                 'baz' => Arr::create(1, 5, 7),
             )),
-            Arr::wrap(range(1, 9))->groupBy(function($x)
-            {
+            Arr::wrap(range(1, 9))->groupBy(function ($x) {
                 if ($x % 3 === 0) return 'foo';
                 if ($x % 2 === 0) return 'bar';
                 return 'baz';

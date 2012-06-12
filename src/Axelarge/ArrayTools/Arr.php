@@ -1089,12 +1089,24 @@ class Arr implements \ArrayAccess, \Iterator
     {
         $result = array();
         if ($arrayAccess) {
-            foreach ($array as $key => $value) {
-                $result[$keyAttribute ? $value[$keyAttribute] : $key] = $value[$valueAttribute];
+            if ($keyAttribute) {
+                foreach ($array as $value) {
+                    $result[$value[$keyAttribute]] = $value[$valueAttribute];
+                }
+            } else {
+                foreach ($array as $key => $value) {
+                    $result[$key] = $value[$valueAttribute];
+                }
             }
         } else {
-            foreach ($array as $key => $value) {
-                $result[$keyAttribute ? $value->{$keyAttribute} : $key] = $value->{$valueAttribute};
+            if ($keyAttribute) {
+                foreach ($array as $value) {
+                    $result[$value->{$keyAttribute}] = $value->{$valueAttribute};
+                }
+            } else {
+                foreach ($array as $key => $value) {
+                    $result[$key] = $value->{$valueAttribute};
+                }
             }
         }
 

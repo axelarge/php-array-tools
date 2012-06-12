@@ -366,4 +366,12 @@ class ArrTest extends \PHPUnit_Framework_TestCase
             $this->getNested()->sortBy('bar')->raw()
         );
     }
+
+    public function testFlatMap()
+    {
+        $this->assertEquals(
+            array('foo', 'bar', 'baz'),
+            Arr::_flatMap(array('foo', 'bar baz'), function ($s) { return explode(' ', $s); })
+        );
+    }
 }

@@ -84,8 +84,7 @@ class Arr implements \ArrayAccess, \Iterator
      */
     public function reverse($preserveKeys = false)
     {
-        $this->arr = array_reverse($this->arr, $preserveKeys);
-        return $this;
+        return new static(array_reverse($this->arr, $preserveKeys));
     }
 
     public function put($key, $value)
@@ -104,6 +103,15 @@ class Arr implements \ArrayAccess, \Iterator
         return isset($this->arr[$key]) ? $this->arr[$key] : $default;
     }
 
+    public static function _getOrPut(&$array, $key, $default = null)
+    {
+        if (!isset($array[$key])) {
+            $array[$key] = $default;
+        }
+
+        return $array[$key];
+    }
+
     public function getOrPut($key, $default = null)
     {
         if (!isset($this->arr[$key])) {
@@ -111,6 +119,17 @@ class Arr implements \ArrayAccess, \Iterator
         }
 
         return $this->arr[$key];
+    }
+
+    public static function _getAndDelete(&$array, $key, $default = null)
+    {
+        if (isset($array[$key])) {
+            $result = $array[$key];
+            unset($array[$key]);
+            return $result;
+        } else {
+            return $default;
+        }
     }
 
     public function getAndDelete($key, $default = null)
@@ -134,6 +153,17 @@ class Arr implements \ArrayAccess, \Iterator
         return reset($this->arr);
     }
 
+    public static function _find($array, $predicate)
+    {
+        foreach ($array as $key => $value) {
+            if ($predicate($value, $key)) {
+                return $value;
+            }
+        }
+
+        return null;
+    }
+
     /**
      * Returns the first value satisfying the predicate or null
      *
@@ -142,13 +172,28 @@ class Arr implements \ArrayAccess, \Iterator
      */
     public function find($predicate)
     {
-        foreach ($this->arr as $key => $value) {
-            if ($predicate($value, $key)) {
-                return $value;
+        return static::_find($this->arr, $predicate);
+    }
+
+    public static function _findKey($array, $predicate)
+    {
+        foreach ($array as $key => $value) {
+            if ($predicate($value, $key)){
+                return $key;
             }
         }
 
         return null;
+    }
+
+    public function findKey($predicate)
+    {
+        return static::_findKey($this->arr, $predicate);
+    }
+
+    public function indexOf($value, $strict = true)
+    {
+        return array_search($value, $this->arr, $strict);
     }
 
     /**
@@ -211,8 +256,7 @@ class Arr implements \ArrayAccess, \Iterator
      */
     public function keys()
     {
-        $this->arr = array_keys($this->arr);
-        return $this;
+        return new static(array_keys($this->arr));
     }
 
     /**
@@ -222,8 +266,7 @@ class Arr implements \ArrayAccess, \Iterator
      */
     public function values()
     {
-        $this->arr = array_values($this->arr);
-        return $this;
+        return new static(array_values($this->arr));
     }
 
     /**
@@ -236,8 +279,7 @@ class Arr implements \ArrayAccess, \Iterator
      */
     public function slice($offset, $length = null, $preserveKeys = false)
     {
-        $this->arr = array_slice($this->arr, $offset, $length, $preserveKeys);
-        return $this;
+        return new static(array_slice($this->arr, $offset, $length, $preserveKeys));
     }
 
     /**
@@ -249,8 +291,9 @@ class Arr implements \ArrayAccess, \Iterator
     public function splice($offset, $length = null, $replacement = null)
     {
         $replacement instanceof Arr and $replacement = $replacement->raw();
-        array_splice($this->arr, $offset, $length, $replacement);
-        return $this;
+        $new = $this->arr;
+        array_splice($new, $offset, $length, $replacement);
+        return new static($new);
     }
 
     /**
@@ -261,10 +304,10 @@ class Arr implements \ArrayAccess, \Iterator
      */
     public function take($n)
     {
-        $this->arr = $n >= 0
+        $new = $n >= 0
             ? array_slice($this->arr, 0, $n)
             : array_slice($this->arr, $n);
-        return $this;
+        return new static($new);
     }
 
     /**
@@ -275,17 +318,16 @@ class Arr implements \ArrayAccess, \Iterator
      */
     public function drop($n)
     {
-        $this->arr = $n >= 0
+        $new = $n >= 0
             ? array_slice($this->arr, $n)
             : array_slice($this->arr, 0, $n);
 
-        return $this;
+        return new static($new);
     }
 
     public function unique()
     {
-        $this->arr = array_unique($this->arr);
-        return $this;
+        return new static(array_unique($this->arr));
     }
 
     /**
@@ -307,8 +349,8 @@ class Arr implements \ArrayAccess, \Iterator
                 $result[] = $value;
             }
         }
-        $this->arr = $result;
-        return $this;
+
+        return new static($result);
     }
 
     /**
@@ -355,6 +397,11 @@ class Arr implements \ArrayAccess, \Iterator
         return array_shift($this->arr);
     }
 
+    public static function _only($arr, $keys)
+    {
+        return array_intersect_key($arr, array_flip($keys));
+    }
+
     /**
      * Returns only those values whose keys are present in $keys
      *
@@ -374,8 +421,24 @@ class Arr implements \ArrayAccess, \Iterator
             $keys = func_get_args();
         }
 
-        $this->arr = array_intersect_key($this->arr, array_flip($keys));
-        return $this;
+        return new static(array_intersect_key($this->arr, array_flip($keys)));
+    }
+
+    /**
+     * Returns only those values whose keys are not present in $keys
+     *
+     * Scalar values can also be passed as multiple arguments
+     * <code>
+     * Arr::create(range('a', 'e'))->except(2, 4); //=> ['a', 'b', 'd']
+     * </code>
+     *
+     * @param array $arr
+     * @param array $keys
+     * @return array
+     */
+    public static function _except($arr, $keys)
+    {
+        return array_diff_key($arr, array_flip($keys));
     }
 
     /**
@@ -397,8 +460,7 @@ class Arr implements \ArrayAccess, \Iterator
             $keys = func_get_args();
         }
 
-        $this->arr = array_diff_key($this->arr, array_flip($keys));
-        return $this;
+        return new static(array_diff_key($this->arr, array_flip($keys)));
     }
 
     /**
@@ -414,8 +476,7 @@ class Arr implements \ArrayAccess, \Iterator
     public function intersection($other)
     {
         $other instanceof Arr and $other = $other->raw();
-        $this->arr = array_intersect($this->arr, $other);
-        return $this;
+        return new static(array_intersect($this->arr, $other));
     }
 
     /**
@@ -431,8 +492,7 @@ class Arr implements \ArrayAccess, \Iterator
     public function difference($other)
     {
         $other instanceof Arr and $other = $other->raw();
-        $this->arr = array_diff($this->arr, $other);
-        return $this;
+        return new static(array_diff($this->arr, $other));
     }
 
     /**
@@ -494,33 +554,73 @@ class Arr implements \ArrayAccess, \Iterator
     /**
      * Re-indexes the array by either results of the callback or a sub-key
      *
+     * @param array $array
      * @param callback|string $callbackOrKey
      * @param bool $arrayAccess Whether to use array or object access when given a key name
-     * @return static
+     * @return array
      */
-    public function indexBy($callbackOrKey, $arrayAccess = true)
+    public static function _indexBy($array, $callbackOrKey, $arrayAccess = true)
     {
         $indexed = array();
 
         if (is_string($callbackOrKey)) {
             if ($arrayAccess) {
-                foreach ($this->arr as $element) {
+                foreach ($array as $element) {
                     $indexed[$element[$callbackOrKey]] = $element;
                 }
             } else {
-                foreach ($this->arr as $element) {
+                foreach ($array as $element) {
                     $indexed[$element->{$callbackOrKey}] = $element;
                 }
             }
         } else {
-            foreach ($this->arr as $element) {
+            foreach ($array as $element) {
                 $indexed[$callbackOrKey($element)] = $element;
             }
         }
 
-        $this->arr = $indexed;
+        return $indexed;
+    }
 
-        return $this;
+    /**
+     * Re-indexes the array by either results of a callback or a sub-key
+     *
+     * @param callback|string $callbackOrKey
+     * @param bool $arrayAccess Whether to use array or object access when given a key name
+     * @return static $this
+     */
+    public function indexBy($callbackOrKey, $arrayAccess = true)
+    {
+        return new static(static::_indexBy($this->arr, $callbackOrKey, $arrayAccess));
+    }
+
+    /**
+     * @param array $array
+     * @param callback|string $callbackOrKey
+     * @param bool $arrayAccess Whether to use array or object access when given a key name
+     * @return array
+     */
+    public static function _groupBy($array, $callbackOrKey, $arrayAccess = true)
+    {
+        $groups = array();
+
+        if (is_string($callbackOrKey)) {
+            if ($arrayAccess) {
+                foreach ($array as $element) {
+                    $groups[$element[$callbackOrKey]][] = $element;
+                }
+            } else {
+                foreach ($array as $element) {
+                    $groups[$element->{$callbackOrKey}][] = $element;
+                }
+            }
+        } else {
+            foreach ($array as $element) {
+                $groups[$callbackOrKey($element)][] = $element;
+            }
+        }
+
+        return $groups;
     }
 
     /**
@@ -530,35 +630,23 @@ class Arr implements \ArrayAccess, \Iterator
      */
     public function groupBy($callbackOrKey, $arrayAccess = true)
     {
-        $groups = array();
-
-        if (is_string($callbackOrKey)) {
-            if ($arrayAccess) {
-                foreach ($this->arr as $element) {
-                    $groups[$element[$callbackOrKey]][] = $element;
-                }
-            } else {
-                foreach ($this->arr as $element) {
-                    $groups[$element->{$callbackOrKey}][] = $element;
-                }
-            }
-        } else {
-            foreach ($this->arr as $element) {
-                $groups[$callbackOrKey($element)][] = $element;
-            }
-        }
-
+        $groups = static::_groupBy($this->arr, $callbackOrKey, $arrayAccess);
         foreach ($groups as &$group) {
             $group = static::wrap($group);
         }
 
-        $this->arr = $groups;
-
-        return $this;
+        return new static($groups);
     }
 
 
     // split_by
+
+    public static function _sample($array, $size = 1)
+    {
+        return $size === 1
+            ? $array[array_rand($array)]
+            : static::_only($array, array_rand($array, $size));
+    }
 
     public function sample($size = 1)
     {
@@ -574,8 +662,7 @@ class Arr implements \ArrayAccess, \Iterator
     public function merge($arr)
     {
         $arr instanceof Arr and $arr = $arr->raw();
-        $this->arr = array_merge($this->arr, $arr);
-        return $this;
+        return new static(array_merge($this->arr, $arr));
     }
 
     /**
@@ -585,8 +672,7 @@ class Arr implements \ArrayAccess, \Iterator
     public function reverseMerge($other)
     {
         $other instanceof static and $other = $other->raw();
-        $this->arr = array_merge($other, $this->arr);
-        return $this;
+        return new static(array_merge($other, $this->arr));
     }
 
     /**
@@ -596,8 +682,14 @@ class Arr implements \ArrayAccess, \Iterator
     public function combine($arr)
     {
         $arr instanceof Arr and $arr = $arr->raw();
-        $this->arr = array_combine($this->arr, $arr);
-        return $this;
+        return new static(array_combine($this->arr, $arr));
+    }
+
+    public static function _zip($array1, $array2)
+    {
+        $args = func_get_args();
+        array_unshift($args, null);
+        return call_user_func_array('array_map', $args);
     }
 
     /**
@@ -607,21 +699,33 @@ class Arr implements \ArrayAccess, \Iterator
     public function zip($arr)
     {
         $arr instanceof Arr and $arr = $arr->raw();
-
-        $this->arr = array_map(null, $this->arr, $arr);
-        return $this;
+        return new static(array_map(null, $this->arr, $arr));
     }
 
     public function flip()
     {
-        $this->arr = array_flip($this->arr);
-        return $this;
+        return new static(array_flip($this->arr));
     }
 
+    /**
+     * Shuffles the array in-place
+     *
+     * @return Arr
+     */
     public function shuffle()
     {
         shuffle($this->arr);
         return $this;
+    }
+
+    /**
+     * Returns a shuffled copy of the array
+     *
+     * @return Arr
+     */
+    public function shuffled()
+    {
+        return $this->dup()->shuffle();
     }
 
     public function chunk($size = 1, $preserveKeys = false)
@@ -630,10 +734,8 @@ class Arr implements \ArrayAccess, \Iterator
         foreach (array_chunk($this->arr, $size, $preserveKeys) as $chunk) {
             $chunks[] = static::wrap($chunk);
         }
-        $this->arr = $chunks;
-        return $this;
+        return new static($chunks);
     }
-
 
     public function each($callback)
     {
@@ -654,49 +756,67 @@ class Arr implements \ArrayAccess, \Iterator
 
     public function filter($callback = null)
     {
-        $this->arr = array_filter($this->arr, $callback);
+        return new static(array_filter($this->arr, $callback));
+    }
+
+    public function tap($callback)
+    {
+        $callback($this);
         return $this;
+    }
+
+    public function tapRaw($callback)
+    {
+        $callback($this->arr);
+        return $this;
+    }
+
+    public static function _map($array, $callback, $createKeys = false)
+    {
+        if ($createKeys) {
+            $result = array();
+            foreach (array_map($callback, $array) as $pair) {
+                list($key, $value) = $pair;
+                $result[$key] = $value;
+            }
+        } else {
+            $result = array_map($callback, $array);
+        }
+
+        return $result;
     }
 
     public function map($callback, $createKeys = false)
     {
-        if ($createKeys) {
-            $result = array();
-            foreach (array_map($callback, $this->arr) as $pair) {
-                list($key, $value) = $pair;
-                $result[$key] = $value;
-            }
-            $this->arr = $result;
-        } else {
-            $this->arr = array_map($callback, $this->arr);
-        }
-
-        return $this;
+        return new static(static::_map($this->arr, $callback, $createKeys));
     }
 
-    public function mapWithKey($callback, $createKeys = false)
+    public static function _mapWithKey($array, $callback, $createKeys = false)
     {
         $mapped = array();
         if ($createKeys) {
-            foreach ($this->arr as $key => $value) {
+            foreach ($array as $key => $value) {
                 list($newKey, $newValue) = $callback($value, $key);
                 $mapped[$newKey] = $newValue;
             }
         } else {
-            foreach ($this->arr as $key => $value) {
+            foreach ($array as $key => $value) {
                 $mapped[$key] = $callback($value, $key);
             }
         }
 
-        $this->arr = $mapped;
-
-        return $this;
+        return $mapped;
     }
 
-    public function flatMap($callback)
+    public function mapWithKey($callback, $createKeys = false)
+    {
+        return new static(static::_mapWithKey($this->arr, $callback, $createKeys));
+    }
+
+    public static function _flatMap($array, $callback)
     {
         $result = array();
-        foreach ($this->arr as $key => $value) {
+        foreach ($array as $key => $value) {
             $newValues = $callback($value, $key);
             if ($newValues) {
                 foreach ($newValues as $newValue) {
@@ -704,45 +824,69 @@ class Arr implements \ArrayAccess, \Iterator
                 }
             }
         }
-        $this->arr = $result;
 
-        return $this;
+        return $result;
+    }
+
+
+    public function flatMap($callback)
+    {
+        return new static(static::_flatMap($this->arr, $callback));
+    }
+
+    public static function _flatten($array)
+    {
+        return call_user_func_array('array_merge', $array);
     }
 
     public function flatten()
     {
-        $this->arr = call_user_func_array('array_merge', $this->arr);
-
-        return $this;
+        return new static(call_user_func_array('array_merge', $this->arr));
     }
 
-    public function pluck($valueAttribute, $keyAttribute = null, $arrayAccess = true)
+    public static function _pluck($array, $valueAttribute, $keyAttribute = null, $arrayAccess = true)
     {
         $result = array();
         if ($arrayAccess) {
-            foreach ($this->arr as $key => $value) {
+            foreach ($array as $key => $value) {
                 $result[$keyAttribute ? $value[$keyAttribute] : $key] = $value[$valueAttribute];
             }
         } else {
-            foreach ($this->arr as $key => $value) {
+            foreach ($array as $key => $value) {
                 $result[$keyAttribute ? $value->{$keyAttribute} : $key] = $value->{$valueAttribute};
             }
         }
-        $this->arr = $result;
 
-        return $this;
+        return $result;
+    }
+
+    public function pluck($array, $valueAttribute, $keyAttribute = null, $arrayAccess = true)
+    {
+        return new static(static::_pluck($array, $valueAttribute, $keyAttribute, $arrayAccess));
     }
 
     public function fold($callback, $initial = null)
     {
-        $this->arr = array_reduce($this->arr, $callback, $initial);
-        return $this;
+        return array_reduce($this->arr, $callback, $initial);
     }
 
     public function foldRight($callback, $initial = null)
     {
-        $this->arr = array_reduce(array_reverse($this->arr), $callback, $initial);
-        return $this;
+        return array_reduce(array_reverse($this->arr), $callback, $initial);
+    }
+
+    public static function _partition($array, $predicate)
+    {
+        $pass = array();
+        $fail = array();
+
+        foreach ($array as $key => $value) {
+            $predicate($value, $key)
+                ? $pass[$key] = $value
+                : $fail[$key] = $value;
+        }
+
+        return array($pass, $fail);
     }
 
     /**
@@ -751,15 +895,7 @@ class Arr implements \ArrayAccess, \Iterator
      */
     public function partition($predicate)
     {
-        $pass = array();
-        $fail = array();
-
-        foreach ($this->arr as $key => $value) {
-            $predicate($value, $key)
-                ? $pass[$key] = $value
-                : $fail[$key] = $value;
-        }
-
+        list($pass, $fail) = static::_partition($this->arr, $predicate);
         return array(new static($pass), new static($fail));
     }
 
@@ -845,6 +981,23 @@ class Arr implements \ArrayAccess, \Iterator
     }
 
     /**
+     * @param array $array
+     * @param array|Arr $arr
+     * @param $callback
+     * @return array
+     */
+    public static function _zipWith($array, $arr, $callback)
+    {
+        $result = array();
+        foreach ($array as $a) {
+            list(,$b) = each($arr);
+            $result[] = $callback($a, $b);
+        }
+
+        return $result;
+    }
+
+    /**
      * @param array|Arr $arr
      * @param $callback
      * @return static
@@ -852,19 +1005,11 @@ class Arr implements \ArrayAccess, \Iterator
     public function zipWith($arr, $callback)
     {
         $arr instanceof Arr and $arr = $arr->raw();
-
-        $result = array();
-        foreach ($this->arr as $a) {
-            $b = each($arr);
-            $result[] = $callback($a, $b);
-        }
-        $this->arr = $result;
-
-        return $this;
+        return new static(static::_zipWith($this->arr, $arr, $callback));
     }
 
     /**
-     * Sorts the array
+     * Sorts the array in-place
      *
      * @param bool $preserveKeys
      * @param int $mode Sort flags
@@ -877,7 +1022,46 @@ class Arr implements \ArrayAccess, \Iterator
     }
 
     /**
+     * Returns a sorted copy of the array
+     *
+     * @param bool $preserveKeys
+     * @param int $mode Sort flags
+     * @return static
+     */
+    public function sorted($preserveKeys = false, $mode = SORT_REGULAR)
+    {
+        return $this->dup()->sort($preserveKeys, $mode);
+    }
+
+    /**
      * Sorts the array by a key or result of a callback
+     *
+     * @param array $array
+     * @param string|\callback $callbackOrKey
+     * @param int $mode Sort flags
+     * @return array
+     */
+    public static function _sortBy($array, $callbackOrKey, $mode = SORT_REGULAR)
+    {
+        $sortBy = array();
+        if (is_string($callbackOrKey)) {
+            foreach ($array as $value) {
+                $sortBy[] = $value[$callbackOrKey];
+            }
+        } else {
+            foreach ($array as $key => $value) {
+                $sortBy[] = $callbackOrKey($value, $key);
+            }
+        }
+
+        array_multisort($sortBy, $mode, $array);
+
+        return $array;
+    }
+
+
+    /**
+     * Sorts the array in-place by a key or result of a callback
      *
      * @param string|\callback $callbackOrKey
      * @param int $mode Sort flags
@@ -885,20 +1069,19 @@ class Arr implements \ArrayAccess, \Iterator
      */
     public function sortBy($callbackOrKey, $mode = SORT_REGULAR)
     {
-        $sortBy = array();
-        if (is_string($callbackOrKey)) {
-            foreach ($this->arr as $value) {
-                $sortBy[] = $value[$callbackOrKey];
-            }
-        } else {
-            foreach ($this->arr as $key => $value) {
-                $sortBy[] = $callbackOrKey($value, $key);
-            }
-        }
+        return new static(static::_sortBy($this->arr, $callbackOrKey, $mode));
+    }
 
-        array_multisort($sortBy, $mode, $this->arr);
-
-        return $this;
+    /**
+     * Returns a copy of the array sorted by a key or result of a callback
+     *
+     * @param string|\callback $callbackOrKey
+     * @param int $mode Sort flags
+     * @return static
+     */
+    public function sortedBy($callbackOrKey, $mode = SORT_REGULAR)
+    {
+        return $this->dup()->sortBy($callbackOrKey, $mode);
     }
 
 

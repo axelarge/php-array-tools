@@ -15,6 +15,13 @@ class Arr implements \ArrayAccess, \Iterator
         $this->arr = $arr;
     }
 
+    /**
+     * Creates a new instance by wrapping the given array
+     *
+     * @static
+     * @param array $arr
+     * @return static
+     */
     public static function wrap(array $arr)
     {
         return new static($arr);
@@ -87,22 +94,50 @@ class Arr implements \ArrayAccess, \Iterator
         return new static(array_reverse($this->arr, $preserveKeys));
     }
 
+    /**
+     * Inserts a value for the given key
+     *
+     * @param string|int $key
+     * @param mixed $value
+     * @return static
+     */
     public function put($key, $value)
     {
         $this->arr[$key] = $value;
         return $this;
     }
 
+    /**
+     * Returns the value at the given index
+     *
+     * @param string|int $key
+     * @return mixed
+     */
     public function get($key)
     {
         return $this->arr[$key];
     }
 
+    /**
+     * Returns the value at the given index or $default if it not present
+     *
+     * @param int|string $key
+     * @param mixed $default
+     * @return mixed
+     */
     public function getOrElse($key, $default = null)
     {
         return isset($this->arr[$key]) ? $this->arr[$key] : $default;
     }
 
+    /**
+     * Returns the value at the given index. If not present, inserts $default and returns it
+     *
+     * @param array $array
+     * @param int|string $key
+     * @param mixed $default
+     * @return mixed
+     */
     public static function _getOrPut(&$array, $key, $default = null)
     {
         if (!isset($array[$key])) {
@@ -112,6 +147,13 @@ class Arr implements \ArrayAccess, \Iterator
         return $array[$key];
     }
 
+    /**
+     * Returns the value at the given index. If not present, inserts $default and returns it
+     *
+     * @param int|string $key
+     * @param mixed $default
+     * @return mixed
+     */
     public function getOrPut($key, $default = null)
     {
         if (!isset($this->arr[$key])) {
@@ -121,6 +163,14 @@ class Arr implements \ArrayAccess, \Iterator
         return $this->arr[$key];
     }
 
+    /**
+     * Deletes and returns a value from an array
+     *
+     * @param array $array
+     * @param int|string $key
+     * @param mixed $default
+     * @return mixed
+     */
     public static function _getAndDelete(&$array, $key, $default = null)
     {
         if (isset($array[$key])) {
@@ -132,6 +182,13 @@ class Arr implements \ArrayAccess, \Iterator
         }
     }
 
+    /**
+     * Deletes and returns a value from an array
+     *
+     * @param int|string $key
+     * @param mixed $default
+     * @return mixed
+     */
     public function getAndDelete($key, $default = null)
     {
         if (isset($this->arr[$key])) {
@@ -153,6 +210,23 @@ class Arr implements \ArrayAccess, \Iterator
         return reset($this->arr);
     }
 
+    /**
+     * Returns the last value
+     *
+     * @return mixed
+     */
+    public function last()
+    {
+        return end($this->arr);
+    }
+
+    /**
+     * Returns the first value of the array satisfying the predicate or null
+     *
+     * @param array $array
+     * @param \callable $predicate
+     * @return mixed|null
+     */
     public static function _find($array, $predicate)
     {
         foreach ($array as $key => $value) {
@@ -175,6 +249,13 @@ class Arr implements \ArrayAccess, \Iterator
         return static::_find($this->arr, $predicate);
     }
 
+    /**
+     * Returns the key satisfying the predicate or null
+     *
+     * @param array $array
+     * @param \callable $predicate
+     * @return int|null|string
+     */
     public static function _findKey($array, $predicate)
     {
         foreach ($array as $key => $value) {
@@ -186,24 +267,27 @@ class Arr implements \ArrayAccess, \Iterator
         return null;
     }
 
+    /**
+     * Returns the key satisfying the predicate or null
+     *
+     * @param \callable $predicate
+     * @return int|null|string
+     */
     public function findKey($predicate)
     {
         return static::_findKey($this->arr, $predicate);
     }
 
+    /**
+     * Returns the position of the value in the array or false if the value is not found
+     *
+     * @param mixed $value
+     * @param bool $strict Whether to use strict comparison
+     * @return bool|int|string
+     */
     public function indexOf($value, $strict = true)
     {
         return array_search($value, $this->arr, $strict);
-    }
-
-    /**
-     * Returns the last value
-     *
-     * @return mixed
-     */
-    public function last()
-    {
-        return end($this->arr);
     }
 
     /**
@@ -283,6 +367,8 @@ class Arr implements \ArrayAccess, \Iterator
     }
 
     /**
+     * Replaces part of the array with another array
+     *
      * @param int $offset
      * @param int $length
      * @param array|Arr $replacement
@@ -325,6 +411,11 @@ class Arr implements \ArrayAccess, \Iterator
         return new static($new);
     }
 
+    /**
+     * Returns unique values of the array
+     *
+     * @return static
+     */
     public function unique()
     {
         return new static(array_unique($this->arr));
@@ -341,6 +432,12 @@ class Arr implements \ArrayAccess, \Iterator
         return implode($separator, $this->arr);
     }
 
+    /**
+     * Repeats the array $n times
+     *
+     * @param int $n
+     * @return static
+     */
     public function repeat($n)
     {
         $result = array();
@@ -397,6 +494,17 @@ class Arr implements \ArrayAccess, \Iterator
         return array_shift($this->arr);
     }
 
+    /**
+     * Returns only those values whose keys are present in $keys
+     *
+     * <code>
+     * Arr::_only(range('a', 'e'), [3, 4]); //=> ['d', 'e']
+     * </code>
+     *
+     * @param array $arr
+     * @param array $keys
+     * @return array
+     */
     public static function _only($arr, $keys)
     {
         return array_intersect_key($arr, array_flip($keys));
@@ -427,9 +535,8 @@ class Arr implements \ArrayAccess, \Iterator
     /**
      * Returns only those values whose keys are not present in $keys
      *
-     * Scalar values can also be passed as multiple arguments
      * <code>
-     * Arr::create(range('a', 'e'))->except(2, 4); //=> ['a', 'b', 'd']
+     * Arr::_except(range('a', 'e'), [2, 4]); //=> ['a', 'b', 'd']
      * </code>
      *
      * @param array $arr
@@ -595,6 +702,8 @@ class Arr implements \ArrayAccess, \Iterator
     }
 
     /**
+     * Groups the array into sets key by either results of a callback or a sub-key
+     *
      * @param array $array
      * @param callback|string $callbackOrKey
      * @param bool $arrayAccess Whether to use array or object access when given a key name
@@ -624,6 +733,8 @@ class Arr implements \ArrayAccess, \Iterator
     }
 
     /**
+     * Groups the array into sets key by either results of a callback or a sub-key
+     *
      * @param callback|string $callbackOrKey
      * @param bool $arrayAccess Whether to use array or object access when given a key name
      * @return static
@@ -641,6 +752,13 @@ class Arr implements \ArrayAccess, \Iterator
 
     // split_by
 
+    /**
+     * Returns $size random elements from the array or a single element if $size is 1
+     *
+     * @param array $array
+     * @param int $size
+     * @return array
+     */
     public static function _sample($array, $size = 1)
     {
         return $size === 1
@@ -648,6 +766,12 @@ class Arr implements \ArrayAccess, \Iterator
             : static::_only($array, array_rand($array, $size));
     }
 
+    /**
+     * Returns $size random elements from the array or a single element if $size is 1
+     *
+     * @param int $size
+     * @return static
+     */
     public function sample($size = 1)
     {
         return $size === 1
@@ -656,17 +780,21 @@ class Arr implements \ArrayAccess, \Iterator
     }
 
     /**
-     * @param array|Arr $arr
+     * Merges the array with $other. When two values have identical string keys, the one from $other is taken.
+     *
+     * @param array|Arr $other
      * @return static
      */
-    public function merge($arr)
+    public function merge($other)
     {
-        $arr instanceof Arr and $arr = $arr->raw();
-        return new static(array_merge($this->arr, $arr));
+        $other instanceof Arr and $other = $other->raw();
+        return new static(array_merge($this->arr, $other));
     }
 
     /**
-     * @param array|static $other
+     * Merges $other with the array. When two values have identical string keys, the one from $other is discarded.
+     *
+     * @param array|Arr $other
      * @return static
      */
     public function reverseMerge($other)
@@ -676,15 +804,23 @@ class Arr implements \ArrayAccess, \Iterator
     }
 
     /**
-     * @param array|Arr $arr
+     * Returns a new array using $this as the keys and $values as the values
+     * @param array|Arr $values
      * @return static
      */
-    public function combine($arr)
+    public function combine($values)
     {
-        $arr instanceof Arr and $arr = $arr->raw();
-        return new static(array_combine($this->arr, $arr));
+        $values instanceof Arr and $values = $values->raw();
+        return new static(array_combine($this->arr, $values));
     }
 
+    /**
+     * Zips together two or more arrays
+     *
+     * @param array $array1
+     * @param array $array2
+     * @return array
+     */
     public static function _zip($array1, $array2)
     {
         $args = func_get_args();
@@ -693,6 +829,8 @@ class Arr implements \ArrayAccess, \Iterator
     }
 
     /**
+     * Zips the array with another
+     *
      * @param array|Arr $arr
      * @return static
      */
@@ -702,6 +840,11 @@ class Arr implements \ArrayAccess, \Iterator
         return new static(array_map(null, $this->arr, $arr));
     }
 
+    /**
+     * Flips the array
+     *
+     * @return static
+     */
     public function flip()
     {
         return new static(array_flip($this->arr));
@@ -710,7 +853,7 @@ class Arr implements \ArrayAccess, \Iterator
     /**
      * Shuffles the array in-place
      *
-     * @return Arr
+     * @return static
      */
     public function shuffle()
     {
@@ -721,13 +864,20 @@ class Arr implements \ArrayAccess, \Iterator
     /**
      * Returns a shuffled copy of the array
      *
-     * @return Arr
+     * @return static
      */
     public function shuffled()
     {
         return $this->dup()->shuffle();
     }
 
+    /**
+     * Splits the array into chunks of $size
+     *
+     * @param int $size
+     * @param bool $preserveKeys
+     * @return static
+     */
     public function chunk($size = 1, $preserveKeys = false)
     {
         $chunks = array();
@@ -737,7 +887,15 @@ class Arr implements \ArrayAccess, \Iterator
         return new static($chunks);
     }
 
-    public function each($callback)
+    /**
+     * Runs a callback for each element in the array
+     *
+     * Passes the element as the first argument and a incrementing index as the second
+     *
+     * @param \callable $callback
+     * @return static
+     */
+    public function eachWithIndex($callback)
     {
         $i = 0;
         foreach ($this->arr as $item) {
@@ -746,6 +904,12 @@ class Arr implements \ArrayAccess, \Iterator
         return $this;
     }
 
+    /**
+     * Runs a callback for each key-value pair in the array
+     *
+     * @param \callable $callback
+     * @return static
+     */
     public function eachPair($callback)
     {
         foreach ($this->arr as $key => $value) {
@@ -754,43 +918,66 @@ class Arr implements \ArrayAccess, \Iterator
         return $this;
     }
 
-    public function filter($callback = null)
+    /**
+     * Filters the array by a predicate
+     *
+     * @param \callable $predicate If null, checks if the value is not empty
+     * @return static
+     */
+    public function filter($predicate = null)
     {
-        return new static(array_filter($this->arr, $callback));
+        return new static(array_filter($this->arr, $predicate));
     }
 
+    /**
+     * Run a callback passing $this as the argument, then return $this. Useful for chaining.
+     *
+     * @param \callable $callback
+     * @return static
+     */
     public function tap($callback)
     {
         $callback($this);
         return $this;
     }
 
+    /**
+     * Run a callback passing the underlying array as the argument, then return $this. Useful for chaining.
+     *
+     * @param \callable $callback
+     * @return static
+     */
     public function tapRaw($callback)
     {
         $callback($this->arr);
         return $this;
     }
 
-    public static function _map($array, $callback, $createKeys = false)
+    /**
+     * Map the array into another, applying $callback to each element
+     *
+     * @param callback $callback
+     * @return static
+     */
+    public function map($callback)
     {
-        if ($createKeys) {
-            $result = array();
-            foreach (array_map($callback, $array) as $pair) {
-                list($key, $value) = $pair;
-                $result[$key] = $value;
-            }
-        } else {
-            $result = array_map($callback, $array);
-        }
-
-        return $result;
+        return new static(array_map($callback, $this->arr));
     }
 
-    public function map($callback, $createKeys = false)
-    {
-        return new static(static::_map($this->arr, $callback, $createKeys));
-    }
-
+    /**
+     * Map the array into another, applying $callback to each element and it's key.
+     * If $createKeys is set to true, the callback should return an array with the key and value for the new element
+     *
+     * <code>
+     * Arr::_mapWithKey(['a' => 1, 'b' => 2, 'c' => 3], function ($k, $v) { return [strtoupper($k), $v + 3]; }, true);
+     * //=> ['A' => 4, 'B' => 5, 'C' => 6]
+     * </code>
+     *
+     * @param array $array
+     * @param callback $callback
+     * @param bool $createKeys
+     * @return array
+     */
     public static function _mapWithKey($array, $callback, $createKeys = false)
     {
         $mapped = array();
@@ -808,11 +995,36 @@ class Arr implements \ArrayAccess, \Iterator
         return $mapped;
     }
 
+    /**
+     * Map the array into another, applying $callback to each element and it's key.
+     * If $createKeys is set to true, the callback should return an array with the key and value for the new element
+     *
+     * <code>
+     * Arr::wrap(['a' => 1, 'b' => 2, 'c' => 3])->mapWithKey(function ($k, $v) { return [strtoupper($k), $v + 3]; }, true);
+     * //=> ['A' => 4, 'B' => 5, 'C' => 6]
+     * </code>
+     *
+     * @param callback $callback
+     * @param bool $createKeys
+     * @return static
+     */
     public function mapWithKey($callback, $createKeys = false)
     {
         return new static(static::_mapWithKey($this->arr, $callback, $createKeys));
     }
 
+    /**
+     * Maps an array into another by applying $callback to each element and flattening the results
+     *
+     * <code>
+     * Arr::_flatMap(['foo', 'bar baz'], function ($s) { return explode(' ', $s); });
+     * //=> ['foo', 'bar', 'baz']
+     * </code>
+     *
+     * @param array $array
+     * @param callback $callback Should return an array
+     * @return array array
+     */
     public static function _flatMap($array, $callback)
     {
         $result = array();
@@ -828,17 +1040,46 @@ class Arr implements \ArrayAccess, \Iterator
         return $result;
     }
 
-
+    /**
+     * Maps an array into another by applying $callback to each element and flattening the results
+     *
+     * <code>
+     * Arr::wrap(['foo', 'bar baz'])->flatMap(function ($s) { return explode(' ', $s); });
+     * //=> ['foo', 'bar', 'baz']
+     * </code>
+     *
+     * @param callback $callback Should return an array
+     * @return array array
+     */
     public function flatMap($callback)
     {
         return new static(static::_flatMap($this->arr, $callback));
     }
 
+    /**
+     * Flattens the array, combining elements of all sub-arrays into one array
+     *
+     * <code>
+     * Arr::_flatten([[1, 2, 3], [4, 5]]); //=> [1, 2, 3, 4, 5]
+     * </code>
+     *
+     * @param array $array
+     * @return array
+     */
     public static function _flatten($array)
     {
         return call_user_func_array('array_merge', $array);
     }
 
+    /**
+     * Flattens the array, combining elements of all sub-arrays into one array
+     *
+     * <code>
+     * Arr::wrap([[1, 2, 3], [4, 5]])->flatten(); //=> [1, 2, 3, 4, 5]
+     * </code>
+     *
+     * @return static
+     */
     public function flatten()
     {
         return new static(call_user_func_array('array_merge', $this->arr));
@@ -875,6 +1116,13 @@ class Arr implements \ArrayAccess, \Iterator
         return array_reduce(array_reverse($this->arr), $callback, $initial);
     }
 
+    /**
+     * Returns two arrays: one with elements that satisfy the predicate, the other with elements that don't
+     *
+     * @param array $array
+     * @param callback $predicate
+     * @return array
+     */
     public static function _partition($array, $predicate)
     {
         $pass = array();
@@ -890,6 +1138,8 @@ class Arr implements \ArrayAccess, \Iterator
     }
 
     /**
+     * Returns two arrays: one with elements that satisfy the predicate, the other with elements that don't
+     *
      * @param $predicate
      * @return static[]
      */

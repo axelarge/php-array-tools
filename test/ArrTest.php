@@ -121,6 +121,14 @@ class ArrTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($c, $a->zip($b)->raw());
     }
 
+    public function testZipWith()
+    {
+        $a = Arr::create(1, 2, 3);
+        $b = Arr::create(4, 5, 6);
+        $c = array(5, 7, 9);
+        $this->assertEquals($c, $a->zipWith($b, function($a, $b) { return $a + $b; })->raw());
+    }
+
     // TODO preservekeys tests
     public function testChunk()
     {

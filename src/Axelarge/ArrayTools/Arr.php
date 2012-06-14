@@ -1113,9 +1113,9 @@ class Arr implements \ArrayAccess, \Iterator
         return $result;
     }
 
-    public function pluck($array, $valueAttribute, $keyAttribute = null, $arrayAccess = true)
+    public function pluck($valueAttribute, $keyAttribute = null, $arrayAccess = true)
     {
-        return new static(static::_pluck($array, $valueAttribute, $keyAttribute, $arrayAccess));
+        return new static(static::_pluck($this->arr, $valueAttribute, $keyAttribute, $arrayAccess));
     }
 
     public function fold($callback, $initial = null)

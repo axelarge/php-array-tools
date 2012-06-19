@@ -121,13 +121,26 @@ class Arr implements \ArrayAccess, \Iterator
     /**
      * Returns the value at the given index or $default if it not present
      *
+     * @param array $array
+     * @param int|string $key
+     * @param mixed $default
+     * @return mixed
+     */
+    public static function _getOrElse($array, $key, $default = null)
+    {
+        return array_key_exists($key, $array) ? $array[$key] : $default;
+    }
+
+    /**
+     * Returns the value at the given index or $default if it not present
+     *
      * @param int|string $key
      * @param mixed $default
      * @return mixed
      */
     public function getOrElse($key, $default = null)
     {
-        return isset($this->arr[$key]) ? $this->arr[$key] : $default;
+        return array_key_exists($key, $this->arr) ? $this->arr[$key] : $default;
     }
 
     /**

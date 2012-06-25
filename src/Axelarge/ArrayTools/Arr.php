@@ -618,12 +618,13 @@ class Arr implements \ArrayAccess, \Iterator
     /**
      * Returns true if all elements satisfy the given predicate
      *
-     * @param \callable $predicate
+     * @param $array
+     * @param callback $predicate
      * @return bool
      */
-    public function all($predicate)
+    public static function _all($array, $predicate)
     {
-        foreach ($this->arr as $key => $value) {
+        foreach ($array as $key => $value) {
             if (!$predicate($value, $key)) {
                 return false;
             }
@@ -633,14 +634,26 @@ class Arr implements \ArrayAccess, \Iterator
     }
 
     /**
-     * Returns true if at least one element satisfies the given predicate
+     * Returns true if all elements satisfy the given predicate
      *
-     * @param \callable $predicate
+     * @param callback $predicate
      * @return bool
      */
-    public function any($predicate)
+    public function all($predicate)
     {
-        foreach ($this->arr as $key => $value) {
+        return static::_all($this->arr, $predicate);
+    }
+
+    /**
+     * Returns true if at least one element satisfies the given predicate
+     *
+     * @param $array
+     * @param callback $predicate
+     * @return bool
+     */
+    public static function _any($array, $predicate)
+    {
+        foreach ($array as $key => $value) {
             if ($predicate($value, $key)) {
                 return true;
             }
@@ -650,15 +663,27 @@ class Arr implements \ArrayAccess, \Iterator
     }
 
     /**
-     * Returns true if exactly one element satisfies the given predicate
+     * Returns true if at least one element satisfies the given predicate
      *
-     * @param \callable $predicate
+     * @param callback $predicate
      * @return bool
      */
-    public function one($predicate)
+    public function any($predicate)
+    {
+        return static::_any($this->arr, $predicate);
+    }
+
+    /**
+     * Returns true if exactly one element satisfies the given predicate
+     *
+     * @param $array
+     * @param callback $predicate
+     * @return bool
+     */
+    public static function _one($array, $predicate)
     {
         $foundOne = false;
-        foreach ($this->arr as $key => $value) {
+        foreach ($array as $key => $value) {
             if ($predicate($value, $key)) {
                 if ($foundOne) {
                     return false;
@@ -669,6 +694,17 @@ class Arr implements \ArrayAccess, \Iterator
         }
 
         return $foundOne;
+    }
+
+    /**
+     * Returns true if exactly one element satisfies the given predicate
+     *
+     * @param callback $predicate
+     * @return bool
+     */
+    public function one($predicate)
+    {
+        return static::_one($this->arr, $predicate);
     }
 
     /**

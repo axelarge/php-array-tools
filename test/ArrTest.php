@@ -43,6 +43,45 @@ class ArrTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($arr->raw(), $dup->raw());
     }
 
+    protected static function getDeeplyNestedArray()
+    {
+        return array(
+            'a' => array(
+                'a' => 42,
+                'b' => array(
+                    'a' => 'x',
+                    'c' => array(1, 2, 3),
+                ),
+                'b.c' => 'unreachable',
+            ),
+        );
+    }
+
+    public static function getNestedProvider()
+    {
+        $nested = self::getDeeplyNestedArray();
+
+        return array(
+            array($nested, 'a.b.a', null, 'x', 'Retrieving a value works'),
+            array($nested, 'a.b.a', 'd', 'x', 'Default value is only used when key is missing'),
+            array($nested, 'a.b.c.0', 'd', 1, 'Retrieving keypaths containing numeric keys works'),
+            array($nested, array('a', 'b', 'c', 0), 'd', 1, 'Retrieving keypaths given an array works'),
+            array($nested, 'a.b.c.x', 'd', 'd', 'Default value is returned for non-existing key'),
+            array($nested, array('foo', 'bar'), 'd', 'd', 'Default value is returned for non-existing array key'),
+            array($nested, 'a.b.c', null, array(1, 2, 3), "Keys don't have to point to leaf elements"),
+            array($nested, null, null, $nested, 'Passing null yields the whole array'),
+        );
+    }
+
+    /**
+     * @dataProvider getNestedProvider
+     */
+    public function testGetNested($arr, $key, $default, $expected, $message = null)
+    {
+        $this->assertEquals($expected, Arr::_getNested($arr, $key, $default), $message);
+        $this->assertEquals($expected, Arr::w($arr)->getNested($key, $default), $message);
+    }
+
     public function testLength()
     {
         $this->assertEquals(3, Arr::create(1, 2, 3)->length());

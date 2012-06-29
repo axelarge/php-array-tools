@@ -144,6 +144,51 @@ class Arr implements \ArrayAccess, \Iterator
     }
 
     /**
+     * Retrieves a nested element from an array or $default if it doesn't exist
+     *
+     * <code>
+     * Arr::_getNested(['a' => ['b' => ['c' => 2]]], 'a.b.c'); //=> 2
+     * Arr::_getNested(['a' => ['b' => ['c' => 2]]], ['a', 'b', 'c']); //=> 2
+     * Arr::_getNested(['a' => 1], 'foo', 'default'); //=> 'default'
+     * </code>
+     *
+     * @param array $array
+     * @param string|array $keys The key path as either an array or a dot-separated string
+     * @param mixed $default
+     * @return mixed
+     */
+    public static function _getNested($array, $keys, $default = null)
+    {
+        if (is_string($keys)) {
+            $keys = explode('.', $keys);
+        } else if ($keys === null) {
+            return $array;
+        }
+
+        foreach ($keys as $key) {
+            if (array_key_exists($key, $array)) {
+                $array = $array[$key];
+            } else {
+                return $default;
+            }
+        }
+
+        return $array;
+    }
+
+    /**
+     * Retrieves a nested element from the array or $default if it doesn't exist
+     *
+     * @param string|array $keys
+     * @param mixed $default
+     * @return mixed
+     */
+    public function getNested($keys, $default = null)
+    {
+        return static::_getNested($this->arr, $keys, $default);
+    }
+
+    /**
      * Returns the value at the given index. If not present, inserts $default and returns it
      *
      * @param array $array

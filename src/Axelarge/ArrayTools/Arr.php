@@ -664,7 +664,7 @@ class Arr implements \ArrayAccess, \Iterator
      * Returns true if all elements satisfy the given predicate
      *
      * @param $array
-     * @param callback $predicate
+     * @param callable $predicate
      * @return bool
      */
     public static function _all($array, $predicate)
@@ -681,7 +681,7 @@ class Arr implements \ArrayAccess, \Iterator
     /**
      * Returns true if all elements satisfy the given predicate
      *
-     * @param callback $predicate
+     * @param callable $predicate
      * @return bool
      */
     public function all($predicate)
@@ -693,7 +693,7 @@ class Arr implements \ArrayAccess, \Iterator
      * Returns true if at least one element satisfies the given predicate
      *
      * @param $array
-     * @param callback $predicate
+     * @param callable $predicate
      * @return bool
      */
     public static function _any($array, $predicate)
@@ -710,7 +710,7 @@ class Arr implements \ArrayAccess, \Iterator
     /**
      * Returns true if at least one element satisfies the given predicate
      *
-     * @param callback $predicate
+     * @param callable $predicate
      * @return bool
      */
     public function any($predicate)
@@ -722,7 +722,7 @@ class Arr implements \ArrayAccess, \Iterator
      * Returns true if exactly one element satisfies the given predicate
      *
      * @param $array
-     * @param callback $predicate
+     * @param callable $predicate
      * @return bool
      */
     public static function _one($array, $predicate)
@@ -744,7 +744,7 @@ class Arr implements \ArrayAccess, \Iterator
     /**
      * Returns true if exactly one element satisfies the given predicate
      *
-     * @param callback $predicate
+     * @param callable $predicate
      * @return bool
      */
     public function one($predicate)
@@ -756,7 +756,7 @@ class Arr implements \ArrayAccess, \Iterator
      * Re-indexes the array by either results of the callback or a sub-key
      *
      * @param array $array
-     * @param callback|string $callbackOrKey
+     * @param callable|string $callbackOrKey
      * @param bool $arrayAccess Whether to use array or object access when given a key name
      * @return array
      */
@@ -786,7 +786,7 @@ class Arr implements \ArrayAccess, \Iterator
     /**
      * Re-indexes the array by either results of a callback or a sub-key
      *
-     * @param callback|string $callbackOrKey
+     * @param callable|string $callbackOrKey
      * @param bool $arrayAccess Whether to use array or object access when given a key name
      * @return static $this
      */
@@ -799,7 +799,7 @@ class Arr implements \ArrayAccess, \Iterator
      * Groups the array into sets key by either results of a callback or a sub-key
      *
      * @param array $array
-     * @param callback|string $callbackOrKey
+     * @param callable|string $callbackOrKey
      * @param bool $arrayAccess Whether to use array or object access when given a key name
      * @return array
      */
@@ -829,7 +829,7 @@ class Arr implements \ArrayAccess, \Iterator
     /**
      * Groups the array into sets key by either results of a callback or a sub-key
      *
-     * @param callback|string $callbackOrKey
+     * @param callable|string $callbackOrKey
      * @param bool $arrayAccess Whether to use array or object access when given a key name
      * @return static
      */
@@ -986,7 +986,7 @@ class Arr implements \ArrayAccess, \Iterator
      *
      * Passes the element as the first argument and a incrementing index as the second
      *
-     * @param \callable $callback
+     * @param callable $callback
      * @return static
      */
     public function eachWithIndex($callback)
@@ -1001,7 +1001,7 @@ class Arr implements \ArrayAccess, \Iterator
     /**
      * Runs a callback for each key-value pair in the array
      *
-     * @param \callable $callback
+     * @param callable $callback
      * @return static
      */
     public function eachPair($callback)
@@ -1015,7 +1015,7 @@ class Arr implements \ArrayAccess, \Iterator
     /**
      * Filters the array by a predicate
      *
-     * @param \callable $predicate If null, checks if the value is not empty
+     * @param callable $predicate If null, checks if the value is not empty
      * @return static
      */
     public function filter($predicate = null)
@@ -1026,7 +1026,7 @@ class Arr implements \ArrayAccess, \Iterator
     /**
      * Run a callback passing $this as the argument, then return $this. Useful for chaining.
      *
-     * @param \callable $callback
+     * @param callable $callback
      * @return static
      */
     public function tap($callback)
@@ -1038,7 +1038,7 @@ class Arr implements \ArrayAccess, \Iterator
     /**
      * Run a callback passing the underlying array as the argument, then return $this. Useful for chaining.
      *
-     * @param \callable $callback
+     * @param callable $callback
      * @return static
      */
     public function tapRaw($callback)
@@ -1050,7 +1050,7 @@ class Arr implements \ArrayAccess, \Iterator
     /**
      * Map the array into another, applying $callback to each element
      *
-     * @param callback $callback
+     * @param callable $callback
      * @return static
      */
     public function map($callback)
@@ -1068,7 +1068,7 @@ class Arr implements \ArrayAccess, \Iterator
      * </code>
      *
      * @param array $array
-     * @param callback $callback
+     * @param callable $callback
      * @param bool $createKeys
      * @return array
      */
@@ -1098,7 +1098,7 @@ class Arr implements \ArrayAccess, \Iterator
      * //=> ['A' => 4, 'B' => 5, 'C' => 6]
      * </code>
      *
-     * @param callback $callback
+     * @param callable $callback
      * @param bool $createKeys
      * @return static
      */
@@ -1116,7 +1116,7 @@ class Arr implements \ArrayAccess, \Iterator
      * </code>
      *
      * @param array $array
-     * @param callback $callback Should return an array
+     * @param callable $callback Should return an array
      * @return array array
      */
     public static function _flatMap($array, $callback)
@@ -1142,7 +1142,7 @@ class Arr implements \ArrayAccess, \Iterator
      * //=> ['foo', 'bar', 'baz']
      * </code>
      *
-     * @param callback $callback Should return an array
+     * @param callable $callback Should return an array
      * @return array array
      */
     public function flatMap($callback)
@@ -1226,7 +1226,7 @@ class Arr implements \ArrayAccess, \Iterator
      * Returns two arrays: one with elements that satisfy the predicate, the other with elements that don't
      *
      * @param array $array
-     * @param callback $predicate
+     * @param callable $predicate
      * @return array
      */
     public static function _partition($array, $predicate)
@@ -1246,7 +1246,7 @@ class Arr implements \ArrayAccess, \Iterator
     /**
      * Returns two arrays: one with elements that satisfy the predicate, the other with elements that don't
      *
-     * @param $predicate
+     * @param callable $predicate
      * @return static[]
      */
     public function partition($predicate)
@@ -1278,7 +1278,7 @@ class Arr implements \ArrayAccess, \Iterator
     /**
      * Finds the element for which the result of the callback is the smallest
      *
-     * @param \callable $callback
+     * @param callable $callback
      * @return mixed
      */
     public function minBy($callback)
@@ -1299,7 +1299,7 @@ class Arr implements \ArrayAccess, \Iterator
     /**
      * Finds the element for which the result of the callback is the largest
      *
-     * @param \callable $callback
+     * @param callable $callback
      * @return mixed
      */
     public function maxBy($callback)
@@ -1320,7 +1320,7 @@ class Arr implements \ArrayAccess, \Iterator
     /**
      * Returns the sum of all elements
      *
-     * @param \callable $callback If given, sums the results of this callback over each element
+     * @param callable $callback If given, sums the results of this callback over each element
      * @return number
      */
     public function sum($callback = null)
@@ -1339,7 +1339,7 @@ class Arr implements \ArrayAccess, \Iterator
     /**
      * @param array $array
      * @param array|Arr $arr
-     * @param $callback
+     * @param callable $callback
      * @return array
      */
     public static function _zipWith($array, $arr, $callback)
@@ -1355,7 +1355,7 @@ class Arr implements \ArrayAccess, \Iterator
 
     /**
      * @param array|Arr $arr
-     * @param $callback
+     * @param callable $callback
      * @return static
      */
     public function zipWith($arr, $callback)
@@ -1393,7 +1393,7 @@ class Arr implements \ArrayAccess, \Iterator
      * Sorts the array by a key or result of a callback
      *
      * @param array $array
-     * @param string|\callback $callbackOrKey
+     * @param callable|string $callbackOrKey
      * @param int $mode Sort flags
      * @return array
      */
@@ -1419,7 +1419,7 @@ class Arr implements \ArrayAccess, \Iterator
     /**
      * Sorts the array in-place by a key or result of a callback
      *
-     * @param string|\callback $callbackOrKey
+     * @param callable|string $callbackOrKey
      * @param int $mode Sort flags
      * @return static
      */
@@ -1431,7 +1431,7 @@ class Arr implements \ArrayAccess, \Iterator
     /**
      * Returns a copy of the array sorted by a key or result of a callback
      *
-     * @param string|\callback $callbackOrKey
+     * @param callable|string $callbackOrKey
      * @param int $mode Sort flags
      * @return static
      */

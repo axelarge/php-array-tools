@@ -5,7 +5,7 @@ namespace Axelarge\ArrayTools;
  * @license MIT License
  * @license www.opensource.org/licenses/MIT
  */
-class Arr implements \ArrayAccess, \Iterator
+class Arr implements \ArrayAccess, \IteratorAggregate
 {
     /** @var array */
     protected $arr;
@@ -1484,50 +1484,13 @@ class Arr implements \ArrayAccess, \Iterator
         unset($this->arr[$offset]);
     }
 
-
     /**
-     * Implementation of Iterator
+     * Implementation of IteratorAggregate
      *
-     * @return mixed
+     * @return \Iterator
      */
-    public function current()
+    public function getIterator()
     {
-        return current($this->arr);
-    }
-
-    /**
-     * Implementation of Iterator
-     */
-    public function next()
-    {
-        next($this->arr);
-    }
-
-    /**
-     * Implementation of Iterator
-     *
-     * @return int|string
-     */
-    public function key()
-    {
-        return key($this->arr);
-    }
-
-    /**
-     * Implementation of Iterator
-     *
-     * @return boolean
-     */
-    public function valid()
-    {
-        return key($this->arr) === null;
-    }
-
-    /**
-     * Implementation of Iterator
-     */
-    public function rewind()
-    {
-        reset($this->arr);
+        return new ArrayIterator($this->arr);
     }
 }

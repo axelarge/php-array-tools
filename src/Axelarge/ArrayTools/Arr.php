@@ -1491,6 +1491,6 @@ class Arr implements \ArrayAccess, \IteratorAggregate
      */
     public function getIterator()
     {
-        return new ArrayIterator($this->arr);
+        return new \ArrayIterator($this->arr);
     }
 }

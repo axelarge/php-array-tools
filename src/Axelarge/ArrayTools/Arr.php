@@ -1020,7 +1020,9 @@ class Arr implements \ArrayAccess, \IteratorAggregate
      */
     public function filter($predicate = null)
     {
-        return new static(array_filter($this->arr, $predicate));
+        return $predicate === null
+		    ? new static(array_filter($this->arr))
+		    : new static(array_filter($this->arr, $predicate));
     }
 
     /**

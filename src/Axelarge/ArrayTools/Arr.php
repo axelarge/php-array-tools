@@ -282,7 +282,7 @@ class Arr implements \ArrayAccess, \IteratorAggregate
      * Returns the first value of the array satisfying the predicate or null
      *
      * @param array $array
-     * @param \callable $predicate
+     * @param callable $predicate
      * @return mixed|null
      */
     public static function _find($array, $predicate)
@@ -299,7 +299,7 @@ class Arr implements \ArrayAccess, \IteratorAggregate
     /**
      * Returns the first value satisfying the predicate or null
      *
-     * @param \callable $predicate
+     * @param callable $predicate
      * @return mixed|null
      */
     public function find($predicate)
@@ -311,7 +311,7 @@ class Arr implements \ArrayAccess, \IteratorAggregate
      * Returns the key satisfying the predicate or null
      *
      * @param array $array
-     * @param \callable $predicate
+     * @param callable $predicate
      * @return int|null|string
      */
     public static function _findKey($array, $predicate)
@@ -328,7 +328,7 @@ class Arr implements \ArrayAccess, \IteratorAggregate
     /**
      * Returns the key satisfying the predicate or null
      *
-     * @param \callable $predicate
+     * @param callable $predicate
      * @return int|null|string
      */
     public function findKey($predicate)

@@ -276,6 +276,20 @@ class ArrTest extends \PHPUnit_Framework_TestCase
         );
     }
 
+    public function testSample()
+    {
+        $this->assertEquals(3, Arr::wrap(array(1, 2, 3, 4, 5))->sample(3)->length(), "Selects multiple elements correctly");
+        $this->assertEquals(1, Arr::wrap(array(1, 2, 3, 4, 5))->sample(1)->length(), "Selects an array of a single element when size is 1");
+        $this->assertEquals(3, Arr::wrap(array(3, 3, 3, 3, 3))->sample(), "Selects a single element when size is omitted");
+    }
+
+    public function testStaticSample()
+    {
+        $this->assertEquals(3, count(Arr::_sample(array(1, 2, 3, 4, 5), 3)), "Selects multiple elements correctly");
+        $this->assertEquals(1, count(Arr::_sample(array(1, 2, 3, 4, 5), 1)), "Selects an array of a single element when size is 1");
+        $this->assertEquals(3, Arr::_sample(array(3, 3, 3, 3, 3)), "Selects a single element when size is omitted");
+    }
+
     private function getNested()
     {
         return Arr::w(array(

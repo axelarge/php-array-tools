@@ -847,30 +847,32 @@ class Arr implements \ArrayAccess, \IteratorAggregate
     // split_by
 
     /**
-     * Returns $size random elements from the array or a single element if $size is 1
+     * Returns $size random elements from the array or a single element if $size is null
+     * Note that it differs from array_rand() in that it returns an array with a single element if $size is 1
      *
      * @param array $array
-     * @param int $size
+     * @param int|null $size
      * @return array
      */
-    public static function _sample($array, $size = 1)
+    public static function _sample($array, $size = null)
     {
-        return $size === 1
+        return $size === null
             ? $array[array_rand($array)]
-            : static::_only($array, array_rand($array, $size));
+            : static::_only($array, (array)array_rand($array, $size));
     }
 
     /**
-     * Returns $size random elements from the array or a single element if $size is 1
+     * Returns $size random elements from the array or a single element if $size is null
+     * Note that it differs from array_rand() in that it returns an array with a single element if $size is 1
      *
-     * @param int $size
+     * @param int|null $size
      * @return static
      */
-    public function sample($size = 1)
+    public function sample($size = null)
     {
-        return $size === 1
+        return $size === null
             ? $this->arr[array_rand($this->arr)]
-            : $this->only(array_rand($this->arr, $size));
+            : $this->only((array)array_rand($this->arr, $size));
     }
 
     /**

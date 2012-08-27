@@ -843,6 +843,16 @@ class Arr implements \ArrayAccess, \IteratorAggregate
         return new static($groups);
     }
 
+    public static function _sliding($array, $size, $step = 1)
+    {
+        return new GroupedIterator($array, $size, $step);
+    }
+
+    public function sliding($size, $step = 1)
+    {
+        return new ArrIterator(static::_sliding($this->arr, $size, $step));
+    }
+
 
     // split_by
 

@@ -21,18 +21,18 @@ class ArrTest extends \PHPUnit_Framework_TestCase
     public function testCreationFromArray()
     {
         $arr = array(1, 2, 3, 'some' => 'value', 'key' => 'value two');
-        $this->assertEquals($arr, Arr::wrap($arr)->raw());
+        $this->assertEquals($arr, Arr::wrap($arr)->toArray());
     }
 
     public function testCreationFromArgs()
     {
-        $this->assertEquals(Arr::create(1, 2, 3, 'val', 'two')->raw(), array(1, 2, 3, 'val', 'two'));
+        $this->assertEquals(Arr::create(1, 2, 3, 'val', 'two')->toArray(), array(1, 2, 3, 'val', 'two'));
     }
 
     public function testEmptyConstructor()
     {
         $arr = new Arr();
-        $this->assertEquals(array(), $arr->raw());
+        $this->assertEquals(array(), $arr->toArray());
     }
 
     public function testDup()
@@ -40,7 +40,7 @@ class ArrTest extends \PHPUnit_Framework_TestCase
         $arr = Arr::create(1, 2, 3);
         $dup = $arr->dup();
         $this->assertNotSame($arr, $dup);
-        $this->assertEquals($arr->raw(), $dup->raw());
+        $this->assertEquals($arr->toArray(), $dup->toArray());
     }
 
     protected static function getDeeplyNestedArray()
@@ -89,30 +89,30 @@ class ArrTest extends \PHPUnit_Framework_TestCase
 
     public function testKeys()
     {
-        $this->assertEquals(array(0, 1, 'key', 123), $this->makeArr()->keys()->raw());
+        $this->assertEquals(array(0, 1, 'key', 123), $this->makeArr()->keys()->toArray());
     }
 
     public function testValues()
     {
-        $this->assertEquals(array(1, 2, 'val', 456), $this->makeArr()->values()->raw());
+        $this->assertEquals(array(1, 2, 'val', 456), $this->makeArr()->values()->toArray());
     }
 
     public function testTake()
     {
-        $this->assertEquals(array(), $this->make5()->take(0)->raw());
-        $this->assertEquals(array(1, 2), $this->make5()->take(2)->raw());
-        $this->assertEquals(array(1, 2, 3, 4, 5), $this->make5()->take(5)->raw());
-        $this->assertEquals(array(4, 5), $this->make5()->take(-2)->raw());
-        $this->assertEquals(array(1, 2, 3, 4, 5), $this->make5()->take(-5)->raw());
+        $this->assertEquals(array(), $this->make5()->take(0)->toArray());
+        $this->assertEquals(array(1, 2), $this->make5()->take(2)->toArray());
+        $this->assertEquals(array(1, 2, 3, 4, 5), $this->make5()->take(5)->toArray());
+        $this->assertEquals(array(4, 5), $this->make5()->take(-2)->toArray());
+        $this->assertEquals(array(1, 2, 3, 4, 5), $this->make5()->take(-5)->toArray());
     }
 
     public function testDrop()
     {
         $this->assertEquals($this->make5(), $this->make5()->drop(0));
-        $this->assertEquals(array(3, 4, 5), $this->make5()->drop(2)->raw());
-        $this->assertEquals(array(), $this->make5()->drop(5)->raw());
-        $this->assertEquals(array(1, 2, 3), $this->make5()->drop(-2)->raw());
-        $this->assertEquals(array(), $this->make5()->drop(-5)->raw());
+        $this->assertEquals(array(3, 4, 5), $this->make5()->drop(2)->toArray());
+        $this->assertEquals(array(), $this->make5()->drop(5)->toArray());
+        $this->assertEquals(array(1, 2, 3), $this->make5()->drop(-2)->toArray());
+        $this->assertEquals(array(), $this->make5()->drop(-5)->toArray());
     }
 
     public function testJoin()
@@ -124,28 +124,28 @@ class ArrTest extends \PHPUnit_Framework_TestCase
     public function testRepeat()
     {
         $arr = Arr::create(1, 2, 3);
-        $this->assertEquals(array(1, 2, 3, 1, 2, 3, 1, 2, 3), $arr->dup()->repeat(3)->raw());
-        $this->assertEquals(array(), $arr->dup()->repeat(0)->raw());
+        $this->assertEquals(array(1, 2, 3, 1, 2, 3, 1, 2, 3), $arr->dup()->repeat(3)->toArray());
+        $this->assertEquals(array(), $arr->dup()->repeat(0)->toArray());
     }
 
     public function testOnly()
     {
         $arr = $this->makeArr()->only(Arr::create('key', 123));
-        $this->assertEquals(array(123 => 456, 'key' => 'val'), $arr->raw());
+        $this->assertEquals(array(123 => 456, 'key' => 'val'), $arr->toArray());
         $arr = $this->makeArr()->only(array(123, 1));
-        $this->assertEquals(array(123 => 456, 1 => 2), $arr->raw());
+        $this->assertEquals(array(123 => 456, 1 => 2), $arr->toArray());
         $arr = $this->makeArr()->only(123, 1);
-        $this->assertEquals(array(123 => 456, 1 => 2), $arr->raw());
+        $this->assertEquals(array(123 => 456, 1 => 2), $arr->toArray());
     }
 
     public function testExcept()
     {
         $arr = $this->makeArr()->except(Arr::create('key', 123));
-        $this->assertEquals(array(1, 2), $arr->raw());
+        $this->assertEquals(array(1, 2), $arr->toArray());
         $arr = $this->makeArr()->except(array(123, 1));
-        $this->assertEquals(array(1, 'key' => 'val'), $arr->raw());
+        $this->assertEquals(array(1, 'key' => 'val'), $arr->toArray());
         $arr = $this->makeArr()->except(123, 0);
-        $this->assertEquals(array(1 => 2, 'key' => 'val'), $arr->raw());
+        $this->assertEquals(array(1 => 2, 'key' => 'val'), $arr->toArray());
     }
 
     public function testZip()
@@ -157,7 +157,7 @@ class ArrTest extends \PHPUnit_Framework_TestCase
             array(2, 5),
             array(3, 6),
         );
-        $this->assertEquals($c, $a->zip($b)->raw());
+        $this->assertEquals($c, $a->zip($b)->toArray());
     }
 
     public function testZipWith()
@@ -165,7 +165,7 @@ class ArrTest extends \PHPUnit_Framework_TestCase
         $a = Arr::create(1, 2, 3);
         $b = Arr::create(4, 5, 6);
         $c = array(5, 7, 9);
-        $this->assertEquals($c, $a->zipWith($b, function($a, $b) { return $a + $b; })->raw());
+        $this->assertEquals($c, $a->zipWith($b, function($a, $b) { return $a + $b; })->toArray());
     }
 
     // TODO preservekeys tests
@@ -177,7 +177,7 @@ class ArrTest extends \PHPUnit_Framework_TestCase
                 Arr::create(3, 4),
                 Arr::create(5, 6),
             ),
-            Arr::wrap(range(1, 6))->chunk(2)->raw()
+            Arr::wrap(range(1, 6))->chunk(2)->toArray()
         );
     }
 
@@ -185,11 +185,11 @@ class ArrTest extends \PHPUnit_Framework_TestCase
     {
         $this->assertEquals(
             array(),
-            Arr::wrap(range(3, 8))->filter(function ($x) { return $x < 3; })->raw()
+            Arr::wrap(range(3, 8))->filter(function ($x) { return $x < 3; })->toArray()
         );
         $this->assertEquals(
             array_values(array(3, 5, 7)),
-            array_values(Arr::wrap(range(3, 8))->filter(function ($x) { return $x % 2; })->raw())
+            array_values(Arr::wrap(range(3, 8))->filter(function ($x) { return $x % 2; })->toArray())
         );
     }
 
@@ -197,7 +197,7 @@ class ArrTest extends \PHPUnit_Framework_TestCase
     {
         $this->assertEquals(
             array(4, 9, 16),
-            Arr::create(2, 3, 4)->map(function ($x) { return $x * $x; })->raw()
+            Arr::create(2, 3, 4)->map(function ($x) { return $x * $x; })->toArray()
         );
     }
 
@@ -207,8 +207,8 @@ class ArrTest extends \PHPUnit_Framework_TestCase
         /** @var $odd Arr */
         /** @var $even Arr */
 
-        $this->assertEquals(array(1, 3, 5), $odd->values()->raw());
-        $this->assertEquals(array(2, 4), $even->values()->raw());
+        $this->assertEquals(array(1, 3, 5), $odd->values()->toArray());
+        $this->assertEquals(array(2, 4), $even->values()->toArray());
     }
 
     public function testFirst()
@@ -229,7 +229,7 @@ class ArrTest extends \PHPUnit_Framework_TestCase
                 if ($x % 3 === 0) return 'foo';
                 if ($x % 2 === 0) return 'bar';
                 return 'baz';
-            })->raw()
+            })->toArray()
         );
 
         $this->assertEquals(
@@ -238,7 +238,7 @@ class ArrTest extends \PHPUnit_Framework_TestCase
                 2 => array('foo' => 2, 'bar' => 10),
                 3 => array('foo' => 3, 'bar' => 12),
             ),
-            $this->getNested()->indexBy('foo')->raw()
+            $this->getNested()->indexBy('foo')->toArray()
         );
     }
 
@@ -317,7 +317,7 @@ class ArrTest extends \PHPUnit_Framework_TestCase
 
     public function testReverse()
     {
-        $this->assertEquals(array(5, 4, 3, 2, 1), $this->make5()->reverse()->raw());
+        $this->assertEquals(array(5, 4, 3, 2, 1), $this->make5()->reverse()->toArray());
     }
 
     public function testMinBy()
@@ -359,7 +359,7 @@ class ArrTest extends \PHPUnit_Framework_TestCase
     {
         $this->assertEquals(
             array(3, 4, 5, 4, 6, 5),
-            Arr::wrap(array(array(3, 4, 5), array(4, 6, 5)))->flatten()->raw()
+            Arr::wrap(array(array(3, 4, 5), array(4, 6, 5)))->flatten()->toArray()
         );
     }
 
@@ -375,11 +375,11 @@ class ArrTest extends \PHPUnit_Framework_TestCase
 
         $this->assertEquals(
             array(1, 2, 3, 4, 5),
-            $sortable->dup()->sort()->raw()
+            $sortable->dup()->sort()->toArray()
         );
         $this->assertEquals(
             array(5 => 1, 4 => 2, 3 => 3, 2 => 4, 1 => 5),
-            $sortable->dup()->sort(true)->raw()
+            $sortable->dup()->sort(true)->toArray()
         );
     }
 
@@ -394,7 +394,7 @@ class ArrTest extends \PHPUnit_Framework_TestCase
                 array('foo' => 2, 'bar' => 4),
                 array('foo' => 1, 'bar' => 2),
             ),
-            $this->getNested()->sortBy(function ($x) { return -$x['bar']; })->raw()
+            $this->getNested()->sortBy(function ($x) { return -$x['bar']; })->toArray()
         );
         $this->assertEquals(
             array(
@@ -405,7 +405,7 @@ class ArrTest extends \PHPUnit_Framework_TestCase
                 array('foo' => 3, 'bar' => 6),
                 array('foo' => 3, 'bar' => 12),
             ),
-            $this->getNested()->sortBy(function ($x) { return array($x['foo'], $x['bar']); })->raw()
+            $this->getNested()->sortBy(function ($x) { return array($x['foo'], $x['bar']); })->toArray()
         );
         $this->assertEquals(
             array(
@@ -416,7 +416,7 @@ class ArrTest extends \PHPUnit_Framework_TestCase
                 array('foo' => 2, 'bar' => 10),
                 array('foo' => 3, 'bar' => 12),
             ),
-            $this->getNested()->sortBy('bar')->raw()
+            $this->getNested()->sortBy('bar')->toArray()
         );
     }
 

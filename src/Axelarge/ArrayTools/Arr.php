@@ -1065,7 +1065,7 @@ class Arr implements \ArrayAccess, \IteratorAggregate
      * If $createKeys is set to true, the callback should return an array with the key and value for the new element
      *
      * <code>
-     * Arr::_mapWithKey(['a' => 1, 'b' => 2, 'c' => 3], function ($k, $v) { return [strtoupper($k), $v + 3]; }, true);
+     * Arr::_mapWithKey(['a' => 1, 'b' => 2, 'c' => 3], function ($v, $k) { return [strtoupper($k), $v + 3]; }, true);
      * //=> ['A' => 4, 'B' => 5, 'C' => 6]
      * </code>
      *
@@ -1096,7 +1096,7 @@ class Arr implements \ArrayAccess, \IteratorAggregate
      * If $createKeys is set to true, the callback should return an array with the key and value for the new element
      *
      * <code>
-     * Arr::wrap(['a' => 1, 'b' => 2, 'c' => 3])->mapWithKey(function ($k, $v) { return [strtoupper($k), $v + 3]; }, true);
+     * Arr::wrap(['a' => 1, 'b' => 2, 'c' => 3])->mapWithKey(function ($v, $k) { return [strtoupper($k), $v + 3]; }, true);
      * //=> ['A' => 4, 'B' => 5, 'C' => 6]
      * </code>
      *

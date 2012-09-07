@@ -13,7 +13,7 @@ class GroupedIterator implements Iterator
     private $chunkSize;
     /** @var int */
     private $step;
-
+    /** @var int */
     private $current = 0;
 
 
@@ -28,6 +28,14 @@ class GroupedIterator implements Iterator
         $this->chunkSize = $chunkSize;
         $this->step = $step;
         $this->length = count($array);
+    }
+
+    /**
+     * @return array
+     */
+    public function toArray()
+    {
+        return iterator_to_array($this);
     }
 
     /**

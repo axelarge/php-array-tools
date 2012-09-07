@@ -427,4 +427,12 @@ class ArrTest extends \PHPUnit_Framework_TestCase
             Arr::_flatMap(array('foo', 'bar baz'), function ($s) { return explode(' ', $s); })
         );
     }
+
+    public function testSliding()
+    {
+        $this->assertEquals(array(array(1, 2, 3), array(2, 3, 4), array(3, 4, 5)), Arr::_sliding(range(1, 5), 3)->toArray());
+        $this->assertEquals(array(array(1, 2, 3, 4), array(4, 5)), Arr::_sliding(range(1, 5), 4, 3)->toArray());
+//        $this->assertEquals(array(array(1, 2, 3), array(2, 3, 4), array(3, 4, 5)), Arr::wrap(range(1, 5))->sliding(3)->toArray());
+//        $this->assertEquals(array(array(1, 2, 3, 4), array(4, 5)), Arr::wrap(range(1, 5))->sliding(4, 3)->toArray());
+    }
 }

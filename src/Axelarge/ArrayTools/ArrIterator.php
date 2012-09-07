@@ -13,6 +13,14 @@ class ArrIterator implements Iterator
     }
 
     /**
+     * @return array
+     */
+    public function toArray()
+    {
+        return iterator_to_array($this);
+    }
+
+    /**
      * Return the current element
      *
      * @return Arr

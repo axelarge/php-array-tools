@@ -624,6 +624,12 @@ class Arr implements ArrLike
         return new static($groups);
     }
 
+    /**
+     * @param array $array
+     * @param int $size
+     * @param int $step
+     * @return GroupedIterator
+     */
     public static function _sliding($array, $size, $step = 1)
     {
         return new GroupedIterator($array, $size, $step);

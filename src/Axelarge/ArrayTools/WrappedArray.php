@@ -161,23 +161,13 @@ class WrappedArray implements ArrLike
     /** @inheritdoc */
     public function getOrPut($key, $default = null)
     {
-        if (!isset($this->arr[$key])) {
-            $this->arr[$key] = $default;
-        }
-
-        return $this->arr[$key];
+        return Arr::getOrPut($this->arr, $key, $default);
     }
 
     /** @inheritdoc */
     public function getAndDelete($key, $default = null)
     {
-        if (isset($this->arr[$key])) {
-            $result = $this->arr[$key];
-            unset($this->arr[$key]);
-            return $result;
-        } else {
-            return $default;
-        }
+        return Arr::getAndDelete($this->arr, $key, $default);
     }
 
     /** @inheritdoc */

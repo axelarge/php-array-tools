@@ -174,7 +174,7 @@ class Arr
      */
     public static function getOrPut(&$array, $key, $default = null)
     {
-        if (!isset($array[$key])) {
+        if (!array_key_exists($key, $array)) {
             $array[$key] = $default;
         }
 
@@ -191,7 +191,7 @@ class Arr
      */
     public static function getAndDelete(&$array, $key, $default = null)
     {
-        if (isset($array[$key])) {
+        if (array_key_exists($key, $array)) {
             $result = $array[$key];
             unset($array[$key]);
             return $result;

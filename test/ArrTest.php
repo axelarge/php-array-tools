@@ -133,34 +133,40 @@ class ArrTest extends \PHPUnit_Framework_TestCase
 
     public function testStaticGetOrPut()
     {
-        $arr = array(1, 2, 'foo' => 3);
+        $arr = array(1, 2, 'foo' => 3, 'bar' => null);
         $this->assertEquals(3, Arr::getOrPut($arr, 'foo', 'bar'), 'Retrieves existing value');
         $this->assertEquals(3, $arr['foo'], 'Retrieval of existing value does not modify it');
         $this->assertEquals('baz', Arr::getOrPut($arr, 'key', 'baz'), 'Returns default value if key missing');
         $this->assertEquals('baz', $arr['key'], 'Inserts back default value if key missing');
+        $this->assertEquals(null, Arr::getOrPut($arr, 'bar', 'x'), 'Can retrieve null value');
     }
 
     public function testGetOrPut()
     {
-        $arr = Arr::wrap(array(1, 2, 'foo' => 3));
+        $arr = Arr::wrap(array(1, 2, 'foo' => 3, 'bar' => null));
         $this->assertEquals(3, $arr->getOrPut('foo', 'bar'), 'Retrieves existing value');
         $this->assertEquals(3, $arr['foo'], 'Retrieval of existing value does not modify it');
         $this->assertEquals('baz', $arr->getOrPut('key', 'baz'), 'Returns default value if key missing');
         $this->assertEquals('baz', $arr['key'], 'Inserts back default value if key missing');
+        $this->assertEquals(null, $arr->getOrPut('bar', 'x'), 'Can retrieve null value');
     }
 
     public function testStaticGetAndDelete()
     {
-        $arr = array(1, 2, 'foo' => 3);
+        $arr = array(1, 2, 'foo' => 3, 'bar' => null);
         $this->assertEquals(3, Arr::getAndDelete($arr, 'foo'), 'Retrieves value');
         $this->assertFalse(isset($arr['foo']), 'Deletes value after retrieval');
+        $this->assertEquals(null, Arr::getAndDelete($arr, 'bar', 'x'), 'Can retrieve null value');
+        $this->assertFalse(isset($arr['bar']), 'Deleted null value after retrieval');
     }
 
     public function testGetAndDelete()
     {
-        $arr = Arr::wrap(array(1, 2, 'foo' => 3));
+        $arr = Arr::wrap(array(1, 2, 'foo' => 3, 'bar' => null));
         $this->assertEquals(3, $arr->getAndDelete('foo'), 'Retrieves value');
         $this->assertFalse(isset($arr['foo']), 'Deletes value after retrieval');
+        $this->assertEquals(null, $arr->getAndDelete('bar', 'x'), 'Can retrieve null value');
+        $this->assertFalse(isset($arr['bar']), 'Deleted null value after retrieval');
     }
 
     public function testFirst()

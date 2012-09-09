@@ -5,122 +5,111 @@ namespace Axelarge\ArrayTools;
  * @license MIT License
  * @license www.opensource.org/licenses/MIT
  */
-class Arr implements ArrLike
+class Arr
 {
-    /** @var array */
-    protected $arr;
+    private function __construct() {}
 
-
-    public function __construct(array $array = array())
-    {
-        $this->arr = $array;
-    }
-
-    /** @inheritdoc */
+    /**
+     * Creates a new WrappedArray instance from the given array
+     *
+     * @param array $array
+     * @return WrappedArray
+     */
     public static function wrap(array $array)
     {
-        return new static($array);
+        return new WrappedArray($array);
     }
 
     /**
      * Short-hand for wrap()
      *
+     * @deprecated Use wrap() instead
      * @see wrap()
      * @param array $array
-     * @return static
+     * @return WrappedArray
      */
     public static function w(array $array)
     {
-        return new static($array);
+        return new WrappedArray($array);
     }
 
     /**
      * Create a new instance from function arguments
      *
-     * @return static
+     * @deprecated Use wrap() instead
+     * @return WrappedArray
      */
     public static function create()
     {
-        return new static(func_get_args());
+        return new WrappedArray(func_get_args());
     }
 
-    /** @inheritdoc */
-    public function toArray()
+    public static function range($from, $to, $step = null)
     {
-        return $this->arr;
+        return new WrappedArray($step === null ? range($from, $to) : range($from, $to, $step));
     }
 
     /**
-     * Returns the underlying array
-     *
-     * @deprecated Use toArray() instead
-     * @return array
-     */
-    public function raw()
-    {
-        return $this->arr;
-    }
-
-    /**
-     * @return string
-     */
-    public function __toString()
-    {
-        return print_r($this->arr, true);
-    }
-
-    /** @inheritdoc */
-    public function dup()
-    {
-        $dup = clone $this;
-        return $dup;
-    }
-
-    /** @inheritdoc */
-    public function reverse($preserveKeys = false)
-    {
-        return new static(array_reverse($this->arr, $preserveKeys));
-    }
-
-    /** @inheritdoc */
-    public function put($key, $value)
-    {
-        $this->arr[$key] = $value;
-        return $this;
-    }
-
-    /** @inheritdoc */
-    public function get($key)
-    {
-        return $this->arr[$key];
-    }
-
-    /**
-     * Returns the value at the given index or $default if it not present
+     * Returns an easily readable string representation of a nested array structure.
      *
      * @param array $array
-     * @param int|string $key
-     * @param mixed $default
-     * @return mixed
+     * @param bool|null $showKeys Whether to output array keys. Skip to handle intelligently
+     * @return string
      */
-    public static function _getOrElse($array, $key, $default = null)
+    public static function toString($array, $showKeys = null)
     {
-        return array_key_exists($key, $array) ? $array[$key] : $default;
+        $idx = 0;
+        return sprintf('[%s]', implode(', ', static::map($array, function ($v, $k) use (&$idx, $showKeys) {
+            $str = ($showKeys === null && $idx++ === $k || $showKeys === false) ? '' : "$k => ";
+
+            if (is_array($v)) $str .= Arr::toString($v, $showKeys);
+            else if (is_object($v)) $str .= is_callable($v, '__toString') ? (string)$v : get_class($v);
+            else $str .= (string)$v;
+
+            return $str;
+        })));
     }
 
-    /** @inheritdoc */
-    public function getOrElse($key, $default = null)
+
+    // ----- Traversal -----
+
+    /**
+     * Runs a callback for each element in the array
+     *
+     * Passes the element as the first argument and an incrementing index as the second
+     *
+     * <code>
+     * Arr::eachWithIndex(['a', 'b', 'c'], function ($e, $idx) { echo "$idx $e "; }
+     * // outputs "0 a 1 b 2 c "
+     * </code>
+     *
+     * @param array $array
+     * @param callable $callback
+     * @return static
+     */
+    public static function eachWithIndex($array, $callback)
     {
-        return array_key_exists($key, $this->arr) ? $this->arr[$key] : $default;
+        $i = 0;
+        foreach ($array as $item) {
+            $callback($item, $i++);
+        }
     }
+
+
+    // ----- Single element access -----
 
     /**
      * Retrieves a nested element from an array or $default if it doesn't exist
      *
      * <code>
-     * Arr::_getNested(['a' => ['b' => ['c' => 2]]], 'a.b.c'); //=> 2
-     * Arr::_getNested(['a' => ['b' => ['c' => 2]]], ['a', 'b', 'c']); //=> 2
-     * Arr::_getNested(['a' => 1], 'foo', 'default'); //=> 'default'
+     * $friends = [
+     *      'Alice' => ['age' => 33, 'hobbies' => ['biking', 'skiing']],
+     *      'Bob' => ['age' => 29],
+     * ];
+     *
+     * Arr::getNested($friends, 'Alice.hobbies.1'); //=> 'skiing'
+     * Arr::getNested($friends, ['Alice', 'hobbies', 1]); //=> 'skiing'
+     * Arr::getNested($friends, 'Bob.hobbies.0', 'none'); //=> 'none'
      * </code>
      *
      * @param array $array
@@ -128,7 +117,7 @@ class Arr implements ArrLike
      * @param mixed $default
      * @return mixed
      */
-    public static function _getNested($array, $keys, $default = null)
+    public static function getNested($array, $keys, $default = null)
     {
         if (is_string($keys)) {
             $keys = explode('.', $keys);
@@ -147,10 +136,17 @@ class Arr implements ArrLike
         return $array;
     }
 
-    /** @inheritdoc */
-    public function getNested($keys, $default = null)
+    /**
+     * Returns the value at the given index or $default if it not present
+     *
+     * @param array $array
+     * @param int|string $key
+     * @param mixed $default
+     * @return mixed
+     */
+    public static function getOrElse($array, $key, $default = null)
     {
-        return static::_getNested($this->arr, $keys, $default);
+        return array_key_exists($key, $array) ? $array[$key] : $default;
     }
 
     /**
@@ -161,23 +157,13 @@ class Arr implements ArrLike
      * @param mixed $default
      * @return mixed
      */
-    public static function _getOrPut(&$array, $key, $default = null)
+    public static function getOrPut(&$array, $key, $default = null)
     {
         if (!isset($array[$key])) {
             $array[$key] = $default;
         }
 
         return $array[$key];
-    }
-
-    /** @inheritdoc */
-    public function getOrPut($key, $default = null)
-    {
-        if (!isset($this->arr[$key])) {
-            $this->arr[$key] = $default;
-        }
-
-        return $this->arr[$key];
     }
 
     /**
@@ -188,7 +174,7 @@ class Arr implements ArrLike
      * @param mixed $default
      * @return mixed
      */
-    public static function _getAndDelete(&$array, $key, $default = null)
+    public static function getAndDelete(&$array, $key, $default = null)
     {
         if (isset($array[$key])) {
             $result = $array[$key];
@@ -199,38 +185,80 @@ class Arr implements ArrLike
         }
     }
 
-    /** @inheritdoc */
-    public function getAndDelete($key, $default = null)
+
+    // ----- Slicing -----
+
+    /**
+     * Returns longest prefix of elements that satisfy the $predicate.
+     *
+     * The predicate will be passed value and key of each element.
+     *
+     * @param array $array
+     * @param callable $predicate ($value, $key) -> bool
+     * @return array
+     */
+    public static function takeWhile($array, $predicate)
     {
-        if (isset($this->arr[$key])) {
-            $result = $this->arr[$key];
-            unset($this->arr[$key]);
-            return $result;
-        } else {
-            return $default;
+        $n = 0;
+        foreach ($array as $key => $value) {
+            if (!$predicate($value, $key)) break;
+            ++$n;
         }
-    }
 
-    /** @inheritdoc */
-    public function first()
-    {
-        return reset($this->arr);
-    }
-
-    /** @inheritdoc */
-    public function last()
-    {
-        return end($this->arr);
+        return array_slice($array, 0, $n);
     }
 
     /**
-     * Returns the first value of the array satisfying the predicate or null
+     * Drops longest prefix of elements satisfying $predicate and returns the rest.
      *
      * @param array $array
-     * @param callable $predicate
+     * @param callable $predicate ($value, $key) -> bool
+     * @return array
+     */
+    public static function dropWhile($array, $predicate)
+    {
+        $n = 0;
+        foreach ($array as $key => $val) {
+            if (!$predicate($val, $key)) break;
+            ++$n;
+        }
+
+        return array_slice($array, $n);
+    }
+
+    /**
+     * Repeats the array $n times.
+     *
+     * TODO: Convert to iterator to conserve memory and time
+     *
+     * @param array $array
+     * @param int $n
+     * @return array
+     */
+    public function repeat($array, $n)
+    {
+        $result = array();
+        while ($n-- > 0) {
+            foreach ($array as $value) {
+                $result[] = $value;
+            }
+        }
+
+        return $result;
+    }
+
+
+    // ----- Finding -----
+
+    /**
+     * Returns the first value of the array satisfying the $predicate or $default
+     *
+     * @param array $array
+     * @param callable $predicate ($value, $key) -> bool
+     * @param mixed $default
      * @return mixed|null
      */
-    public static function _find($array, $predicate)
+    public static function find($array, $predicate, $default = null)
     {
         foreach ($array as $key => $value) {
             if ($predicate($value, $key)) {
@@ -238,26 +266,39 @@ class Arr implements ArrLike
             }
         }
 
-        return null;
-    }
-
-    /** @inheritdoc */
-    public function find($predicate)
-    {
-        return static::_find($this->arr, $predicate);
+        return $default;
     }
 
     /**
-     * Returns the key satisfying the predicate or null
+     * Returns the last value of the array satisfying the $predicate or $default
      *
      * @param array $array
-     * @param callable $predicate
+     * @param callable $predicate ($value, $key) -> bool
+     * @param mixed $default
+     * @return mixed|null
+     */
+    public static function findLast($array, $predicate, $default = null)
+    {
+        $value = end($array);
+        while (null !== $key = key($array)) {
+            if ($predicate($value, $key)) return $value;
+            $value = prev($array);
+        }
+
+        return $default;
+    }
+
+    /**
+     * Returns the first key satisfying the $predicate or null
+     *
+     * @param array $array
+     * @param callable $predicate ($value, $key) -> bool
      * @return int|null|string
      */
-    public static function _findKey($array, $predicate)
+    public static function findKey($array, $predicate)
     {
         foreach ($array as $key => $value) {
-            if ($predicate($value, $key)){
+            if ($predicate($value, $key)) {
                 return $key;
             }
         }
@@ -265,284 +306,68 @@ class Arr implements ArrLike
         return null;
     }
 
-    /** @inheritdoc */
-    public function findKey($predicate)
+    /**
+     * Returns the last key satisfying the $predicate or null
+     *
+     * @param array $array
+     * @param callable $predicate ($value, $key) -> bool
+     * @return int|null|string
+     */
+    public static function findLastKey($array, $predicate)
     {
-        return static::_findKey($this->arr, $predicate);
-    }
-
-    /** @inheritdoc */
-    public function indexOf($value, $strict = true)
-    {
-        return array_search($value, $this->arr, $strict);
-    }
-
-    /** @inheritdoc */
-    public function hasKey($key)
-    {
-        return array_key_exists($key, $this->arr);
-    }
-
-    /** @inheritdoc */
-    public function hasValue($value, $strict = true)
-    {
-        return in_array($value, $this->arr, $strict);
-    }
-
-    /** @inheritdoc */
-    public function length()
-    {
-        return count($this->arr);
-    }
-
-    /** @inheritdoc */
-    public function isEmpty()
-    {
-        return empty($this->arr);
-    }
-
-    /** @inheritdoc */
-    public function keys()
-    {
-        return new static(array_keys($this->arr));
-    }
-
-    /** @inheritdoc */
-    public function values()
-    {
-        return new static(array_values($this->arr));
-    }
-
-    /** @inheritdoc */
-    public function slice($offset, $length = null, $preserveKeys = false)
-    {
-        return new static(array_slice($this->arr, $offset, $length, $preserveKeys));
-    }
-
-    /** @inheritdoc */
-    public function splice($offset, $length = null, $replacement = null)
-    {
-        $replacement instanceof Arr and $replacement = $replacement->toArray();
-        $new = $this->arr;
-        array_splice($new, $offset, $length, $replacement);
-        return new static($new);
-    }
-
-    /** @inheritdoc */
-    public function take($n)
-    {
-        $new = $n >= 0
-            ? array_slice($this->arr, 0, $n)
-            : array_slice($this->arr, $n);
-        return new static($new);
-    }
-
-    /** @inheritdoc */
-    public function drop($n)
-    {
-        $new = $n >= 0
-            ? array_slice($this->arr, $n)
-            : array_slice($this->arr, 0, $n);
-
-        return new static($new);
-    }
-
-    /** @inheritdoc */
-    public function unique()
-    {
-        return new static(array_unique($this->arr));
-    }
-
-    /** @inheritdoc */
-    public function join($separator = '')
-    {
-        return implode($separator, $this->arr);
-    }
-
-    /** @inheritdoc */
-    public function repeat($n)
-    {
-        $result = array();
-        while ($n-- > 0) {
-            foreach ($this->arr as $value) {
-                $result[] = $value;
-            }
+        $value = end($array);
+        while (null !== $key = key($array)) {
+            if ($predicate($value, $key)) return $key;
+            $value = prev($array);
         }
 
-        return new static($result);
+        return null;
     }
 
-    /** @inheritdoc */
-    public function push($value)
+    public static function lastIndexOf($array, $value, $strict = true)
     {
-        array_push($this->arr, $value);
-        return $this;
+        $item = end($array);
+        while (null !== $key = key($array)) {
+            if ($strict ? ($item === $value) : ($item == $value)) return $key;
+            $item = prev($array);
+        }
+
+        return null;
     }
 
-    /** @inheritdoc */
-    public function pop()
-    {
-        return array_pop($this->arr);
-    }
 
-    /** @inheritdoc */
-    public function unshift($value)
-    {
-        array_unshift($this->arr, $value);
-        return $this;
-    }
-
-    /** @inheritdoc */
-    public function shift()
-    {
-        return array_shift($this->arr);
-    }
+    // ----- Hash operations -----
 
     /**
      * Returns only those values whose keys are present in $keys
      *
      * <code>
-     * Arr::_only(range('a', 'e'), [3, 4]); //=> ['d', 'e']
+     * Arr::only(range('a', 'e'), [3, 4]); //=> ['d', 'e']
      * </code>
      *
      * @param array $array
      * @param array $keys
      * @return array
      */
-    public static function _only($array, $keys)
+    public static function only($array, $keys)
     {
         return array_intersect_key($array, array_flip($keys));
-    }
-
-    /** @inheritdoc */
-    public function only($keys)
-    {
-        if ($keys instanceof Arr) {
-            $keys = $keys->toArray();
-        } else if (func_num_args() > 1 || !is_array($keys)) {
-            $keys = func_get_args();
-        }
-
-        return new static(array_intersect_key($this->arr, array_flip($keys)));
     }
 
     /**
      * Returns only those values whose keys are not present in $keys
      *
      * <code>
-     * Arr::_except(range('a', 'e'), [2, 4]); //=> ['a', 'b', 'd']
+     * Arr::except(range('a', 'e'), [2, 4]); //=> ['a', 'b', 'd']
      * </code>
      *
      * @param array $array
      * @param array $keys
      * @return array
      */
-    public static function _except($array, $keys)
+    public static function except($array, $keys)
     {
         return array_diff_key($array, array_flip($keys));
-    }
-
-    /** @inheritdoc */
-    public function except($keys)
-    {
-        if ($keys instanceof Arr) {
-            $keys = $keys->toArray();
-        } else if (func_num_args() > 1 || !is_array($keys)) {
-            $keys = func_get_args();
-        }
-
-        return new static(array_diff_key($this->arr, array_flip($keys)));
-    }
-
-    /** @inheritdoc */
-    public function intersection($other)
-    {
-        $other instanceof Arr and $other = $other->toArray();
-        return new static(array_intersect($this->arr, $other));
-    }
-
-    /** @inheritdoc */
-    public function difference($other)
-    {
-        $other instanceof Arr and $other = $other->toArray();
-        return new static(array_diff($this->arr, $other));
-    }
-
-    /**
-     * Returns true if all elements satisfy the given predicate
-     *
-     * @param $array
-     * @param callable $predicate
-     * @return bool
-     */
-    public static function _all($array, $predicate)
-    {
-        foreach ($array as $key => $value) {
-            if (!$predicate($value, $key)) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    /** @inheritdoc */
-    public function all($predicate)
-    {
-        return static::_all($this->arr, $predicate);
-    }
-
-    /**
-     * Returns true if at least one element satisfies the given predicate
-     *
-     * @param $array
-     * @param callable $predicate
-     * @return bool
-     */
-    public static function _any($array, $predicate)
-    {
-        foreach ($array as $key => $value) {
-            if ($predicate($value, $key)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /** @inheritdoc */
-    public function any($predicate)
-    {
-        return static::_any($this->arr, $predicate);
-    }
-
-    /**
-     * Returns true if exactly one element satisfies the given predicate
-     *
-     * @param $array
-     * @param callable $predicate
-     * @return bool
-     */
-    public static function _one($array, $predicate)
-    {
-        $foundOne = false;
-        foreach ($array as $key => $value) {
-            if ($predicate($value, $key)) {
-                if ($foundOne) {
-                    return false;
-                } else {
-                    $foundOne = true;
-                }
-            }
-        }
-
-        return $foundOne;
-    }
-
-    /** @inheritdoc */
-    public function one($predicate)
-    {
-        return static::_one($this->arr, $predicate);
     }
 
     /**
@@ -553,7 +378,7 @@ class Arr implements ArrLike
      * @param bool $arrayAccess Whether to use array or object access when given a key name
      * @return array
      */
-    public static function _indexBy($array, $callbackOrKey, $arrayAccess = true)
+    public static function indexBy($array, $callbackOrKey, $arrayAccess = true)
     {
         $indexed = array();
 
@@ -576,12 +401,6 @@ class Arr implements ArrLike
         return $indexed;
     }
 
-    /** @inheritdoc */
-    public function indexBy($callbackOrKey, $arrayAccess = true)
-    {
-        return new static(static::_indexBy($this->arr, $callbackOrKey, $arrayAccess));
-    }
-
     /**
      * Groups the array into sets key by either results of a callback or a sub-key
      *
@@ -590,7 +409,7 @@ class Arr implements ArrLike
      * @param bool $arrayAccess Whether to use array or object access when given a key name
      * @return array
      */
-    public static function _groupBy($array, $callbackOrKey, $arrayAccess = true)
+    public static function groupBy($array, $callbackOrKey, $arrayAccess = true)
     {
         $groups = array();
 
@@ -613,184 +432,122 @@ class Arr implements ArrLike
         return $groups;
     }
 
-    /** @inheritdoc */
-    public function groupBy($callbackOrKey, $arrayAccess = true)
+
+    // ----- Assertions -----
+
+    /**
+     * Returns true if all elements satisfy the given predicate
+     *
+     * @param $array
+     * @param callable $predicate
+     * @return bool
+     */
+    public static function all($array, $predicate)
     {
-        $groups = static::_groupBy($this->arr, $callbackOrKey, $arrayAccess);
-        foreach ($groups as &$group) {
-            $group = static::wrap($group);
+        foreach ($array as $key => $value) {
+            if (!$predicate($value, $key)) {
+                return false;
+            }
         }
 
-        return new static($groups);
+        return true;
     }
 
     /**
-     * @param array $array
-     * @param int $size
-     * @param int $step
-     * @return GroupedIterator
+     * Returns true if at least one element satisfies the given predicate
+     *
+     * @param $array
+     * @param callable $predicate
+     * @return bool
      */
-    public static function _sliding($array, $size, $step = 1)
+    public static function any($array, $predicate)
     {
-        return new GroupedIterator($array, $size, $step);
+        foreach ($array as $key => $value) {
+            if ($predicate($value, $key)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
-    /** @inheritdoc */
-    public function sliding($size, $step = 1)
+    /**
+     * Returns true if exactly one element satisfies the given predicate
+     *
+     * @param $array
+     * @param callable $predicate
+     * @return bool
+     */
+    public static function one($array, $predicate)
     {
-        return new ArrIterator(static::_sliding($this->arr, $size, $step));
+        return self::exactly($array, 1, $predicate);
+    }
+
+    /**
+     * Returns true if none of the elements satisfy $predicate
+     *
+     * @param array $array
+     * @param callable $predicate
+     * @return bool
+     */
+    public static function none($array, $predicate)
+    {
+        return self::exactly($array, 0, $predicate);
+    }
+
+    /**
+     * Returns true if exactly $n elements satisfy the $predicate
+     *
+     * @param array $array
+     * @param int $n
+     * @param callable $predicate ($value, $key) -> bool
+     * @return bool
+     */
+    public static function exactly($array, $n, $predicate)
+    {
+        $found = 0;
+        foreach ($array as $key => $value) {
+            if ($predicate($value, $key)) {
+                if (++$found > $n) return false;
+            }
+        }
+
+        return $found == $n;
     }
 
 
-    // split_by
+    // ----- Filtering -----
 
     /**
      * Returns $size random elements from the array or a single element if $size is null
-     * Note that it differs from array_rand() in that it returns an array with a single element if $size is 1
+     *
+     * This function differs from array_rand() in that it returns an array with a single element if $size is 1.
      *
      * @param array $array
      * @param int|null $size
      * @return array
      */
-    public static function _sample($array, $size = null)
+    public static function sample($array, $size = null)
     {
         return $size === null
             ? $array[array_rand($array)]
-            : static::_only($array, (array)array_rand($array, $size));
+            : static::only($array, (array)array_rand($array, $size));
     }
 
-    /** @inheritdoc */
-    public function sample($size = null)
-    {
-        return $size === null
-            ? $this->arr[array_rand($this->arr)]
-            : $this->only((array)array_rand($this->arr, $size));
-    }
 
-    /** @inheritdoc */
-    public function merge($other)
-    {
-        $other instanceof Arr and $other = $other->toArray();
-        return new static(array_merge($this->arr, $other));
-    }
-
-    /** @inheritdoc */
-    public function reverseMerge($other)
-    {
-        $other instanceof static and $other = $other->toArray();
-        return new static(array_merge($other, $this->arr));
-    }
-
-    /** @inheritdoc */
-    public function combine($values)
-    {
-        $values instanceof Arr and $values = $values->toArray();
-        return new static(array_combine($this->arr, $values));
-    }
+    // ----- Mapping -----
 
     /**
-     * Zips together two or more arrays
+     * Map the collection into another, applying $callback to each element and its key.
      *
-     * @param array $array1
-     * @param array $array2
-     * @return array
-     */
-    public static function _zip($array1, $array2)
-    {
-        $args = func_get_args();
-        array_unshift($args, null);
-        return call_user_func_array('array_map', $args);
-    }
-
-    /** @inheritdoc */
-    public function zip($array)
-    {
-        $array instanceof Arr and $array = $array->toArray();
-        return new static(array_map(null, $this->arr, $array));
-    }
-
-    /** @inheritdoc */
-    public function flip()
-    {
-        return new static(array_flip($this->arr));
-    }
-
-    /** @inheritdoc */
-    public function shuffle()
-    {
-        shuffle($this->arr);
-        return $this;
-    }
-
-    /** @inheritdoc */
-    public function shuffled()
-    {
-        return $this->dup()->shuffle();
-    }
-
-    /** @inheritdoc */
-    public function chunk($size = 1, $preserveKeys = false)
-    {
-        $chunks = array();
-        foreach (array_chunk($this->arr, $size, $preserveKeys) as $chunk) {
-            $chunks[] = static::wrap($chunk);
-        }
-        return new static($chunks);
-    }
-
-    /** @inheritdoc */
-    public function eachWithIndex($callback)
-    {
-        $i = 0;
-        foreach ($this->arr as $item) {
-            $callback($item, $i++);
-        }
-        return $this;
-    }
-
-    /** @inheritdoc */
-    public function eachPair($callback)
-    {
-        foreach ($this->arr as $key => $value) {
-            $callback($key, $value);
-        }
-        return $this;
-    }
-
-    /** @inheritdoc */
-    public function filter($predicate = null)
-    {
-        return $predicate === null
-            ? new static(array_filter($this->arr))
-            : new static(array_filter($this->arr, $predicate));
-    }
-
-    /** @inheritdoc */
-    public function tap($callback)
-    {
-        $callback($this);
-        return $this;
-    }
-
-    /** @inheritdoc */
-    public function tapRaw($callback)
-    {
-        $callback($this->arr);
-        return $this;
-    }
-
-    /** @inheritdoc */
-    public function map($callback)
-    {
-        return new static(array_map($callback, $this->arr));
-    }
-
-    /**
-     * Map the array into another, applying $callback to each element and it's key.
-     * If $createKeys is set to true, the callback should return an array with the key and value for the new element
+     * If $createKeys is set to true, the callback should return an array with the key and value for the new element.
+     * This function differs from the built-in array_map() in that it also passes the key as a
+     * second element to the callback.
      *
      * <code>
-     * Arr::_mapWithKey(['a' => 1, 'b' => 2, 'c' => 3], function ($v, $k) { return [strtoupper($k), $v + 3]; }, true);
+     * Arr::map(['a' => 1, 'b' => 2, 'c' => 3], function ($v) { return $v * 2; });
+     * //=> ['a' => 2, 'b' => 4, 'c' => 6]
+     * Arr::map(['a' => 1, 'b' => 2, 'c' => 3], function ($v, $k) { return [strtoupper($k), $v + 3]; }, true);
      * //=> ['A' => 4, 'B' => 5, 'C' => 6]
      * </code>
      *
@@ -799,7 +556,7 @@ class Arr implements ArrLike
      * @param bool $createKeys
      * @return array
      */
-    public static function _mapWithKey($array, $callback, $createKeys = false)
+    public static function map($array, $callback, $createKeys = false)
     {
         $mapped = array();
         if ($createKeys) {
@@ -816,25 +573,31 @@ class Arr implements ArrLike
         return $mapped;
     }
 
-    /** @inheritdoc */
-    public function mapWithKey($callback, $createKeys = false)
+    /**
+     * @deprecated Use map() instead
+     * @param $array
+     * @param $callback
+     * @param bool $createKeys
+     * @return array
+     */
+    public static function mapWithKey($array, $callback, $createKeys = false)
     {
-        return new static(static::_mapWithKey($this->arr, $callback, $createKeys));
+        return static::map($array, $callback, $createKeys);
     }
 
     /**
      * Maps an array into another by applying $callback to each element and flattening the results
      *
      * <code>
-     * Arr::_flatMap(['foo', 'bar baz'], function ($s) { return explode(' ', $s); });
+     * Arr::flatMap(['foo', 'bar baz'], function ($s) { return explode(' ', $s); });
      * //=> ['foo', 'bar', 'baz']
      * </code>
      *
      * @param array $array
-     * @param callable $callback Should return an array
+     * @param callable $callback ($value, $key) -> array
      * @return array array
      */
-    public static function _flatMap($array, $callback)
+    public static function flatMap($array, $callback)
     {
         $result = array();
         foreach ($array as $key => $value) {
@@ -849,34 +612,27 @@ class Arr implements ArrLike
         return $result;
     }
 
-    /** @inheritdoc */
-    public function flatMap($callback)
-    {
-        return new static(static::_flatMap($this->arr, $callback));
-    }
-
     /**
-     * Flattens the array, combining elements of all sub-arrays into one array
+     * Shortcut method to pick out specified keys/properties from an array of arrays/objects
      *
      * <code>
-     * Arr::_flatten([[1, 2, 3], [4, 5]]); //=> [1, 2, 3, 4, 5]
+     * $people = [
+     *      ['name' => 'Bob', 'age' => 23],
+     *      ['name' => 'Alice', 'age' => 32],
+     *      ['name' => 'Frank', 'age' => 40],
+     * ];
+     *
+     * Arr::pluck($people, 'name'); //=> ['Bob', 'Alice', 'Frank']
+     * Arr::pluck($people, 'age', 'name'); //=> ['Bob' => 23, 'Alice' => 32, 'Frank' => 40]
      * </code>
      *
      * @param array $array
+     * @param string $valueAttribute
+     * @param string|null $keyAttribute
+     * @param bool $arrayAccess Determines whether to use array access ($elem[$prop]) or property access ($elem->$prop)
      * @return array
      */
-    public static function _flatten($array)
-    {
-        return call_user_func_array('array_merge', $array);
-    }
-
-    /** @inheritdoc */
-    public function flatten()
-    {
-        return new static(call_user_func_array('array_merge', $this->arr));
-    }
-
-    public static function _pluck($array, $valueAttribute, $keyAttribute = null, $arrayAccess = true)
+    public static function pluck($array, $valueAttribute, $keyAttribute = null, $arrayAccess = true)
     {
         $result = array();
         if ($arrayAccess) {
@@ -904,23 +660,123 @@ class Arr implements ArrLike
         return $result;
     }
 
-    /** @inheritdoc */
-    public function pluck($valueAttribute, $keyAttribute = null, $arrayAccess = true)
+    /**
+     * Flattens the array, combining elements of all sub-arrays into one array
+     *
+     * <code>
+     * Arr::flatten([[1, 2, 3], [4, 5]]); //=> [1, 2, 3, 4, 5]
+     * </code>
+     *
+     * @param array $array
+     * @return array
+     */
+    public static function flatten($array)
     {
-        return new static(static::_pluck($this->arr, $valueAttribute, $keyAttribute, $arrayAccess));
+        return call_user_func_array('array_merge', $array);
     }
 
-    /** @inheritdoc */
-    public function fold($callback, $initial = null)
+
+    // ----- Folding and reduction -----
+
+
+    /**
+     * Right-associative version of array_reduce().
+     *
+     * <code>
+     * Arr::foldRight(['foo', 'bar', 'baz'], function ($res, $e) { return $res . $e; }); //=> 'bazbarfoo'
+     * </code>
+     *
+     * @param array $array
+     * @param callable $callback ($accumulator, $value, $key) -> mixed
+     * @param mixed $initial
+     * @return mixed
+     */
+    public static function foldRight($array, $callback, $initial = null)
     {
-        return array_reduce($this->arr, $callback, $initial);
+        $value = end($array);
+        while (null !== $key = key($array)) {
+            $initial = $callback($initial, $value, $key);
+            $value = prev($array);
+        }
+
+        return $initial;
     }
 
-    /** @inheritdoc */
-    public function foldRight($callback, $initial = null)
+    /**
+     * Finds the smallest element by result of $callback
+     *
+     * <code>
+     * Arr::minBy(['tasty', 'big', 'cheeseburgers'], 'mb_strlen'); //=> 'big'
+     * </code>
+     *
+     * @param array $array
+     * @param callable $callback ($value, $key) -> number|string
+     * @return mixed
+     */
+    public static function minBy($array, $callback)
     {
-        return array_reduce(array_reverse($this->arr), $callback, $initial);
+        $minResult = null;
+        $minElement = null;
+        foreach ($array as $element) {
+            $current = $callback($element);
+            if (!isset($minResult) || $current < $minResult) {
+                $minResult = $current;
+                $minElement = $element;
+            }
+        }
+
+        return $minElement;
     }
+
+    /**
+     * Finds the largest element by result of $callback
+     *
+     * <code>
+     * Arr::maxBy(['tasty', 'big', 'cheeseburgers'], 'mb_strlen'); //=> 'cheeseburgers'
+     * </code>
+     *
+     * @param array $array
+     * @param callable $callback ($value, $key) -> number|string
+     * @return mixed
+     */
+    public static function maxBy($array, $callback)
+    {
+        $maxResult = null;
+        $maxElement = null;
+        foreach ($array as $element) {
+            $current = $callback($element);
+            if (!isset($maxResult) || $current > $maxResult) {
+                $maxResult = $current;
+                $maxElement = $element;
+            }
+        }
+
+        return $maxElement;
+    }
+
+    /**
+     * Returns the sum of all elements passed through $callback
+     *
+     * <code>
+     * Arr::sumBy(['tasty', 'big', 'cheeseburgers'], 'mb_strlen'); // => 21
+     * </code>
+     *
+     * @param array $array
+     * @param callable $callback ($value, $key) -> number
+     * @return number
+     */
+    public static function sumBy($array, $callback)
+    {
+        $sum = 0;
+        foreach ($array as $value) {
+            $sum += $callback($value);
+        }
+
+        return $sum;
+    }
+
+
+    // ----- Splitting -----
 
     /**
      * Returns two arrays: one with elements that satisfy the predicate, the other with elements that don't
@@ -929,7 +785,7 @@ class Arr implements ArrLike
      * @param callable $predicate
      * @return array
      */
-    public static function _partition($array, $predicate)
+    public static function partition($array, $predicate)
     {
         $pass = array();
         $fail = array();
@@ -943,69 +799,37 @@ class Arr implements ArrLike
         return array($pass, $fail);
     }
 
-    /** @inheritdoc */
-    public function partition($predicate)
+    /**
+     * @param array $array
+     * @param int $size
+     * @param int $step
+     * @return GroupedIterator
+     */
+    public static function sliding($array, $size, $step = 1)
     {
-        list($pass, $fail) = static::_partition($this->arr, $predicate);
-        return array(new static($pass), new static($fail));
+        return new GroupedIterator($array, $size, $step);
     }
 
-    /** @inheritdoc */
-    public function min()
+
+    // ----- Zipping -----
+
+    /**
+     * Zips together two or more arrays
+
+     * <code>
+     * Arr::zip(range(1, 5), range('a', 'e'), [5, 4, 3, 2, 1]);
+     * //=> [[1, a, 5], [2, b, 4], [3, c, 3], [4, d, 2], [5, e, 1]]
+     * </code>
+     *
+     * @param array $array1
+     * @param array $array2
+     * @return array
+     */
+    public static function zip($array1, $array2)
     {
-        return min($this->arr);
-    }
-
-    /** @inheritdoc */
-    public function max()
-    {
-        return max($this->arr);
-    }
-
-    /** @inheritdoc */
-    public function minBy($callback)
-    {
-        $minResult = null;
-        $minElement = null;
-        foreach ($this->arr as $element) {
-            $current = $callback($element);
-            if (!isset($minResult) || $current < $minResult) {
-                $minResult = $current;
-                $minElement = $element;
-            }
-        }
-
-        return $minElement;
-    }
-
-    /** @inheritdoc */
-    public function maxBy($callback)
-    {
-        $maxResult = null;
-        $maxElement = null;
-        foreach ($this->arr as $element) {
-            $current = $callback($element);
-            if (!isset($maxResult) || $current > $maxResult) {
-                $maxResult = $current;
-                $maxElement = $element;
-            }
-        }
-
-        return $maxElement;
-    }
-
-    /** @inheritdoc */
-    public function sum($callback = null)
-    {
-        if ($callback === null) {
-            return array_sum($this->arr);
-        }
-
-        $sum = 0;
-        foreach ($this->arr as $value) {
-            $sum += $callback($value);
-        }
-        return $sum;
+        $args = func_get_args();
+        array_unshift($args, null);
+        return call_user_func_array('array_map', $args);
     }
 
     /**
@@ -1014,7 +838,7 @@ class Arr implements ArrLike
      * @param callable $callback
      * @return array
      */
-    public static function _zipWith($array1, $array2, $callback)
+    public static function zipWith($array1, $array2, $callback)
     {
         $result = array();
         foreach ($array1 as $a) {
@@ -1025,35 +849,18 @@ class Arr implements ArrLike
         return $result;
     }
 
-    /** @inheritdoc */
-    public function zipWith($array, $callback)
-    {
-        $array instanceof Arr and $array = $array->toArray();
-        return new static(static::_zipWith($this->arr, $array, $callback));
-    }
 
-    /** @inheritdoc */
-    public function sort($preserveKeys = false, $mode = SORT_REGULAR)
-    {
-        $preserveKeys ? asort($this->arr, $mode) : sort($this->arr, $mode);
-        return $this;
-    }
-
-    /** @inheritdoc */
-    public function sorted($preserveKeys = false, $mode = SORT_REGULAR)
-    {
-        return $this->dup()->sort($preserveKeys, $mode);
-    }
+    // ----- Sorting -----
 
     /**
-     * Sorts the array by a key or result of a callback
+     * Returns a copy of the array, sorted by a key or result of a callback
      *
      * @param array $array
      * @param callable|string $callbackOrKey
      * @param int $mode Sort flags
      * @return array
      */
-    public static function _sortBy($array, $callbackOrKey, $mode = SORT_REGULAR)
+    public static function sortBy($array, $callbackOrKey, $mode = SORT_REGULAR)
     {
         $sortBy = array();
         if (is_string($callbackOrKey)) {
@@ -1072,70 +879,19 @@ class Arr implements ArrLike
     }
 
 
-    /** @inheritdoc */
-    public function sortBy($callbackOrKey, $mode = SORT_REGULAR)
-    {
-        return new static(static::_sortBy($this->arr, $callbackOrKey, $mode));
-    }
-
-    /** @inheritdoc */
-    public function sortedBy($callbackOrKey, $mode = SORT_REGULAR)
-    {
-        return $this->dup()->sortBy($callbackOrKey, $mode);
-    }
-
-
     /**
-     * Implementation of ArrayAccess
-     *
-     * @param mixed $offset
-     * @return boolean
+     * @deprecated Use the appropriate non-underscored method instead
+     * @param string $method
+     * @param array $args
+     * @throws \InvalidArgumentException
+     * @return mixed
      */
-    public function offsetExists($offset)
+    public static function __callStatic($method, $args)
     {
-        return array_key_exists($this->arr, $offset);
-    }
-
-    /**
-     * Implementation of ArrayAccess
-     *
-     * @param mixed $offset
-     * @return mixed Can return all value types.
-     */
-    public function offsetGet($offset)
-    {
-        return $this->arr[$offset];
-    }
-
-    /**
-     * Implementation of ArrayAccess
-     *
-     * @param mixed $offset
-     * @param mixed $value
-     */
-    public function offsetSet($offset, $value)
-    {
-        $this->arr[$offset] = $value;
-    }
-
-    /**
-     * Implementation of ArrayAccess
-     *
-     * @param mixed $offset
-     */
-    public function offsetUnset($offset)
-    {
-        unset($this->arr[$offset]);
-    }
-
-    /**
-     * Implementation of IteratorAggregate
-     *
-     * @return \Iterator
-     */
-    public function getIterator()
-    {
-        return new \ArrayIterator($this->arr);
+        if ($method[0] === '_') {
+            return call_user_func_array(__CLASS__.'::'.substr($method, 1), $args);
+        }
+        throw new \InvalidArgumentException("Method $method does not exist");
     }
 
 }

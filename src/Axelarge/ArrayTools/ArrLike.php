@@ -1,7 +1,10 @@
 <?php
 namespace Axelarge\ArrayTools;
 
-interface ArrLike extends \ArrayAccess, \IteratorAggregate
+use ArrayAccess;
+use IteratorAggregate;
+
+interface ArrLike extends ArrayAccess, IteratorAggregate
 {
     /**
      * Creates a new instance by wrapping the given array
@@ -11,12 +14,21 @@ interface ArrLike extends \ArrayAccess, \IteratorAggregate
      */
     public static function wrap(array $array);
 
+
     /**
      * Returns the underlying array
      *
+     * @param bool $recursive
      * @return array
      */
-    public function toArray();
+    public function toArray($recursive = false);
+
+    /**
+     * Returns a string representation of the contents
+     *
+     * @return mixed
+     */
+    public function __toString();
 
     /**
      * Returns a clone of the object
@@ -25,13 +37,82 @@ interface ArrLike extends \ArrayAccess, \IteratorAggregate
      */
     public function dup();
 
+
+    // ----- Length checking methods -----
+
     /**
-     * Reverses the array
+     * Returns the length of the array
      *
-     * @param bool $preserveKeys
+     * @return int
+     */
+    public function length();
+
+    /**
+     * Checks if the array is empty
+     *
+     * @return bool
+     */
+    public function isEmpty();
+
+    // prefixLength
+    // segmentLength
+
+
+    // ----- Traversal -----
+
+    /**
+     * Runs a callback for each element in the array
+     *
+     * Passes the element as the first argument and an incrementing index as the second
+     *
+     * <code>
+     * Arr::wrap(['a', 'b', 'c'])->eachWithIndex(function ($e, $idx) { echo "$idx $e "; }
+     * // outputs "0 a 1 b 2 c "
+     * </code>
+     *
+     * @param callable $callback
      * @return static
      */
-    public function reverse($preserveKeys = false);
+    public function eachWithIndex($callback);
+
+    /**
+     * Runs a callback for each key-value pair in the array
+     *
+     * @param callable $callback
+     * @return static
+     */
+    public function eachPair($callback);
+
+    /**
+     * Invokes a callback passing $this as the argument, ignoring the return value.
+     *
+     * Useful for debugging in the middle of a chain.
+     * Can also be used to modify the object, although doing so is discouraged.
+     *
+     * <code>
+     * Arr::wrap(range(1, 10))
+     *      ->filter(function ($v) { return $v % 2 != 0; })
+     *      ->tap(function ($arr) { $arr->unshift(0); }) // Add back zero
+     *      ->map(function ($v) { return $v * $v; })
+     *      ->tap(function ($arr) { var_dump($arr); }) // Debug without breaking the method chain
+     *      ->sum();
+     * </code>
+     *
+     * @param callable $callback
+     * @return static $this
+     */
+    public function tap($callback);
+
+
+    // ----- Single element access -----
+
+    /**
+     * Returns the value at the given index
+     *
+     * @param string|int $key
+     * @return mixed
+     */
+    public function get($key);
 
     /**
      * Inserts a value for the given key
@@ -43,15 +124,18 @@ interface ArrLike extends \ArrayAccess, \IteratorAggregate
     public function put($key, $value);
 
     /**
-     * Returns the value at the given index
-     *
-     * @param string|int $key
-     * @return mixed
-     */
-    public function get($key);
-
-    /**
      * Retrieves a nested element from the array or $default if it doesn't exist
+     *
+     * <code>
+     * $friends = Arr::wrap([
+     *      'Alice' => ['age' => 33, 'hobbies' => ['biking', 'skiing']],
+     *      'Bob' => ['age' => 29],
+     * ]);
+     *
+     * $friends->getNested('Alice.hobbies.1'); //=> 'skiing'
+     * $friends->getNested(['Alice', 'hobbies', 1]); //=> 'skiing'
+     * $friends->getNested('Bob.hobbies.0', 'none'); //=> 'none'
+     * </code>
      *
      * @param string|array $keys
      * @param mixed $default
@@ -60,7 +144,7 @@ interface ArrLike extends \ArrayAccess, \IteratorAggregate
     public function getNested($keys, $default = null);
 
     /**
-     * Returns the value at the given index or $default if it not present
+     * Returns the value at the given index or $default if it's not present
      *
      * @param int|string $key
      * @param mixed $default
@@ -100,30 +184,82 @@ interface ArrLike extends \ArrayAccess, \IteratorAggregate
      */
     public function last();
 
-    /**
-     * Returns the first value satisfying the predicate or null
-     *
-     * @param callable $predicate
-     * @return mixed|null
-     */
-    public function find($predicate);
+
+    // ----- Slicing -----
 
     /**
-     * Returns the key satisfying the predicate or null
+     * Returns the first $n elements or the last -$n elements if $n is negative
      *
-     * @param callable $predicate
-     * @return int|null|string
+     * @param int $n
+     * @return static
      */
-    public function findKey($predicate);
+    public function take($n);
 
     /**
-     * Returns the position of the value in the array or false if the value is not found
+     * Returns longest prefix of elements that satisfy the $predicate.
      *
-     * @param mixed $value
-     * @param bool $strict Whether to use strict comparison
-     * @return bool|int|string
+     * The predicate will be passed value and key of each element.
+     *
+     * @param callable $predicate ($value, $key => bool)
+     * @return static
      */
-    public function indexOf($value, $strict = true);
+    public function takeWhile($predicate);
+
+    /**
+     * Returns all but the first $n elements or all but the last -$n elements if $n is negative
+     *
+     * @param int $n
+     * @return static
+     */
+    public function drop($n);
+
+    /**
+     * Drops longest prefix of elements satisfying $predicate and returns the rest.
+     *
+     * @param callable $predicate ($value, $key => bool)
+     * @return static
+     */
+    public function dropWhile($predicate);
+
+    /**
+     * Returns a slice of the array
+     *
+     * @param int $offset
+     * @param int $length
+     * @param bool $preserveKeys
+     * @return static
+     */
+    public function slice($offset, $length = null, $preserveKeys = false);
+
+    /**
+     * Replaces part of the array with another array
+     *
+     * @param int $offset
+     * @param int $length
+     * @param array|ArrLike|null $replacement
+     * @return static
+     */
+    public function splice($offset, $length = null, $replacement = null);
+
+    /**
+     * Reverses the array
+     *
+     * @param bool $preserveKeys
+     * @return static
+     */
+    public function reverse($preserveKeys = false);
+
+    /**
+     * Repeats the array $n times
+     *
+     * @param int $n
+     * @return static
+     */
+    public function repeat($n);
+    // cycle
+
+
+    // ----- Finding -----
 
     /**
      * Checks if the key exists in the array
@@ -142,19 +278,63 @@ interface ArrLike extends \ArrayAccess, \IteratorAggregate
      */
     public function hasValue($value, $strict = true);
 
-    /**
-     * Returns the length of the array
-     *
-     * @return int
-     */
-    public function length();
+    // hasSlice/containsSlice
+    // indexOfSlice/lastIndexOfSlice
 
     /**
-     * Checks if the array is empty
+     * Returns the first value satisfying the predicate or $default
      *
-     * @return bool
+     * @param callable $predicate ($value, $key) -> bool
+     * @param mixed $default
+     * @return mixed
      */
-    public function isEmpty();
+    public function find($predicate, $default = null);
+
+    /**
+     * Returns the last value satisfying the predicate or $default
+     *
+     * @param callable $predicate ($value, $key) -> bool
+     * @param mixed $default
+     * @return mixed
+     */
+    public function findLast($predicate, $default = null);
+
+    /**
+     * Returns the key satisfying the predicate or null
+     *
+     * @param callable $predicate ($value, $key) -> bool
+     * @return int|string|null
+     */
+    public function findKey($predicate);
+
+    /**
+     * Returns the last key satisfying the predicate or null
+     *
+     * @param callable $predicate ($value, $key) -> bool
+     * @return int|string|null
+     */
+    public function findLastKey($predicate);
+
+    /**
+     * Returns the key of the value in the array or null if the value is not found
+     *
+     * @param mixed $value
+     * @param bool $strict Whether to use strict comparison
+     * @return int|string|null
+     */
+    public function indexOf($value, $strict = true);
+
+    /**
+     * Returns the last position of the value in the array or null if the value is not found
+     *
+     * @param mixed $value
+     * @param bool $strict Whether to use strict comparison
+     * @return int|string|null
+     */
+    public function lastIndexOf($value, $strict = true);
+
+
+    // ----- Hash operations -----
 
     /**
      * Returns the keys of the array
@@ -171,64 +351,98 @@ interface ArrLike extends \ArrayAccess, \IteratorAggregate
     public function values();
 
     /**
-     * Returns a slice of the array
+     * Returns only those values whose keys are present in $keys
      *
-     * @param int $offset
-     * @param int $length
-     * @param bool $preserveKeys
+     * Scalar values can also be passed as multiple arguments
+     * <code>
+     * Arr::create(range('a', 'e'))->only(3, 4); //=> ['d', 'e']
+     * </code>
+     *
+     * @param array|ArrLike|mixed $keys
      * @return static
      */
-    public function slice($offset, $length = null, $preserveKeys = false);
+    public function only($keys);
 
     /**
-     * Replaces part of the array with another array
+     * Returns only those values whose keys are not present in $keys
      *
-     * @param int $offset
-     * @param int $length
-     * @param array|Arr $replacement
+     * Scalar values can also be passed as multiple arguments
+     * <code>
+     * Arr::create(range('a', 'e'))->except(2, 4); //=> ['a', 'b', 'd']
+     * </code>
+     *
+     * @param array|ArrLike|mixed $keys
      * @return static
      */
-    public function splice($offset, $length = null, $replacement = null);
+    public function except($keys);
 
     /**
-     * Returns the first $n elements or the last -$n elements if $n is negative
+     * Re-indexes the array by either results of a callback or a sub-key.
      *
-     * @param int $n
+     * If multiple entries return the same key, the last one is kept.
+     *
+     * <code>
+     * $friends = Arr::wrap([
+     *      ['name' => 'Alice', 'age' => 33],
+     *      ['name' => 'Bob', 'age' => 29],
+     *      ['name' => 'Harry', 'age' => 33],
+     * ]);
+     *
+     * $friends->indexBy('name');
+     * //=> [Alice => [name => Alice, age => 33], Bob => [name => Bob, age => 29], Harry => [name => Harry, age => 33]]
+     * $friends->indexBy('age');
+     * //=> [33 => [name => Harry, age => 33], 29 => [name => Bob, age => 29]]
+     * </code>
+     *
+     * @param callable|string $callbackOrKey ($value, $key) -> number|string
+     * @param bool $arrayAccess Whether to use array or object access when given a key name ($callbackOrKey is a string)
      * @return static
      */
-    public function take($n);
+    public function indexBy($callbackOrKey, $arrayAccess = true);
 
     /**
-     * Returns all but the first $n elements or all but the last -$n elements if $n is negative
+     * Groups the array into sets key by either results of a callback or a sub-key
      *
-     * @param int $n
+     * @param callable|string $callbackOrKey ($value, $key) -> number|string
+     * @param bool $arrayAccess Whether to use array or object access when given a key name ($callbackOrKey is a string)
      * @return static
      */
-    public function drop($n);
+    public function groupBy($callbackOrKey, $arrayAccess = true);
 
     /**
-     * Returns unique values of the array
+     * Merges the array with $other. When two values have identical string keys, the one from $other is taken.
+     *
+     * @param array|ArrLike $other
+     * @return static
+     */
+    public function merge($other);
+
+    /**
+     * Merges $other with the array. When two values have identical string keys, the one from $other is discarded.
+     *
+     * @param array|ArrLike $other
+     * @return static
+     */
+    public function reverseMerge($other);
+
+    /**
+     * Returns a new array using $this as the keys and $values as the values
+     *
+     * @param array|ArrLike $values
+     * @return static
+     */
+    public function combine($values);
+
+    /**
+     * Flips the array, exchanging keys with values
      *
      * @return static
      */
-    public function unique();
+    public function flip();
 
-    /**
-     * Joins the array values into a string, separated by $separator
-     *
-     * @param string $separator
-     * @return string
-     */
-    public function join($separator = '');
 
-    /**
-     * Repeats the array $n times
-     *
-     * @param int $n
-     * @return static
-     */
-    public function repeat($n);
-
+    // ----- Mutation methods -----
+    
     /**
      * Appends an element to the end of the array
      *
@@ -259,32 +473,9 @@ interface ArrLike extends \ArrayAccess, \IteratorAggregate
      */
     public function shift();
 
-    /**
-     * Returns only those values whose keys are present in $keys
-     *
-     * Scalar values can also be passed as multiple arguments
-     * <code>
-     * Arr::create(range('a', 'e'))->only(3, 4); //=> ['d', 'e']
-     * </code>
-     *
-     * @param array|Arr|mixed $keys
-     * @return static
-     */
-    public function only($keys);
 
-    /**
-     * Returns only those values whose keys are not present in $keys
-     *
-     * Scalar values can also be passed as multiple arguments
-     * <code>
-     * Arr::create(range('a', 'e'))->except(2, 4); //=> ['a', 'b', 'd']
-     * </code>
-     *
-     * @param array|Arr|mixed $keys
-     * @return static
-     */
-    public function except($keys);
-
+    // ----- Set operations -----
+    
     /**
      * Returns those values that are present in both arrays
      *
@@ -292,7 +483,7 @@ interface ArrLike extends \ArrayAccess, \IteratorAggregate
      * Arr::create(1, 2, 3)->intersection([2, 3, 4]) //=> [2, 3]
      * </code>
      *
-     * @param array|Arr $other
+     * @param array|ArrLike $other
      * @return static
      */
     public function intersection($other);
@@ -304,11 +495,21 @@ interface ArrLike extends \ArrayAccess, \IteratorAggregate
      * Arr::create(1, 2, 3)->difference([2, 3, 4]) //=> [1]
      * </code>
      *
-     * @param array|Arr $other
+     * @param array|ArrLike $other
      * @return static
      */
     public function difference($other);
 
+//    public function union($other);
+
+
+    // ----- Combinatorial methods -----
+    // combinations
+    // permutations
+    // variations
+
+    // ----- Assertions -----
+    
     /**
      * Returns true if all elements satisfy the given predicate
      *
@@ -334,128 +535,25 @@ interface ArrLike extends \ArrayAccess, \IteratorAggregate
     public function one($predicate);
 
     /**
-     * Re-indexes the array by either results of a callback or a sub-key
+     * Returns true if none of the elements satisfy $predicate
      *
-     * @param callable|string $callbackOrKey
-     * @param bool $arrayAccess Whether to use array or object access when given a key name
-     * @return static $this
+     * @param callable $predicate
+     * @return bool
      */
-    public function indexBy($callbackOrKey, $arrayAccess = true);
+    public function none($predicate);
 
     /**
-     * Groups the array into sets key by either results of a callback or a sub-key
+     * Returns true if exactly $n elements satisfy the given $predicate.
      *
-     * @param callable|string $callbackOrKey
-     * @param bool $arrayAccess Whether to use array or object access when given a key name
-     * @return static
+     * @param int $n
+     * @param callable $predicate ($value, $key) -> bool
+     * @return bool
      */
-    public function groupBy($callbackOrKey, $arrayAccess = true);
-
-    /**
-     * Creates a sliding window of size $size, advancing $step elements on each iteration
-     *
-     * <code>
-     * $oneToFive = Arr::wrap(range(1, 5));
-     * $oneToFive->sliding(3); // [[1, 2, 3], [2, 3, 4], [3, 4, 5]]
-     * $oneToFive->sliding(4, 3); // [[1, 2, 3, 4], [4, 5]]
-     * </code>
-     *
-     * @param int $size
-     * @param int $step
-     * @return ArrLike
-     */
-    public function sliding($size, $step = 1);
+    public function exactly($n, $predicate);
 
 
-    // split_by
 
-    /**
-     * Returns $size random elements from the array or a single element if $size is null
-     * Note that it differs from array_rand() in that it returns an array with a single element if $size is 1
-     *
-     * @param int|null $size
-     * @return static
-     */
-    public function sample($size = null);
-
-    /**
-     * Merges the array with $other. When two values have identical string keys, the one from $other is taken.
-     *
-     * @param array|Arr $other
-     * @return static
-     */
-    public function merge($other);
-
-    /**
-     * Merges $other with the array. When two values have identical string keys, the one from $other is discarded.
-     *
-     * @param array|Arr $other
-     * @return static
-     */
-    public function reverseMerge($other);
-
-    /**
-     * Returns a new array using $this as the keys and $values as the values
-     * @param array|Arr $values
-     * @return static
-     */
-    public function combine($values);
-
-    /**
-     * Zips the array with another
-     *
-     * @param array|Arr $array
-     * @return static
-     */
-    public function zip($array);
-
-    /**
-     * Flips the array
-     *
-     * @return static
-     */
-    public function flip();
-
-    /**
-     * Shuffles the array in-place
-     *
-     * @return static
-     */
-    public function shuffle();
-
-    /**
-     * Returns a shuffled copy of the array
-     *
-     * @return static
-     */
-    public function shuffled();
-
-    /**
-     * Splits the array into chunks of $size
-     *
-     * @param int $size
-     * @param bool $preserveKeys
-     * @return static
-     */
-    public function chunk($size = 1, $preserveKeys = false);
-
-    /**
-     * Runs a callback for each element in the array
-     *
-     * Passes the element as the first argument and a incrementing index as the second
-     *
-     * @param callable $callback
-     * @return static
-     */
-    public function eachWithIndex($callback);
-
-    /**
-     * Runs a callback for each key-value pair in the array
-     *
-     * @param callable $callback
-     * @return static
-     */
-    public function eachPair($callback);
+    // ----- Filtering -----
 
     /**
      * Filters the array by a predicate
@@ -466,23 +564,31 @@ interface ArrLike extends \ArrayAccess, \IteratorAggregate
     public function filter($predicate = null);
 
     /**
-     * Run a callback passing $this as the argument, then return $this. Useful for chaining.
+     * Returns unique values of the array
      *
-     * @param callable $callback
      * @return static
      */
-    public function tap($callback);
+    public function unique();
 
     /**
-     * Run a callback passing the underlying array as the argument, then return $this. Useful for chaining.
+     * Returns $size random elements from the array or a single element if $size is null.
      *
-     * @param callable $callback
+     * @param int|null $size
      * @return static
      */
-    public function tapRaw($callback);
+    public function sample($size = null);
+
+
+    // ----- Mapping -----
 
     /**
-     * Map the array into another, applying $callback to each element
+     * Map the array into another, applying $callback to each element and its key
+     *
+     * <code>
+     * Arr::wrap([2, 3, 4])->map(function ($x) { return $x * $x; }); //=> [3, 9, 16]
+//     * Arr::wrap(['Bob' => 23, 'Alice' => 23])->map(function ($age, $name) { return "$name is $age years old"; });
+//     * //=> [3, 9, 16]
+     * </code>
      *
      * @param callable $callback
      * @return static
@@ -512,10 +618,64 @@ interface ArrLike extends \ArrayAccess, \IteratorAggregate
      * //=> ['foo', 'bar', 'baz']
      * </code>
      *
-     * @param callable $callback Should return an array
+     * @param callable $callback ($value, $key) -> array
      * @return array array
      */
     public function flatMap($callback);
+
+    /**
+     * Shortcut method to pick out specified keys/properties from an array of arrays/objects
+     *
+     * <code>
+     * $people = Arr::wrap([
+     *      ['name' => 'Bob', 'age' => 23],
+     *      ['name' => 'Alice', 'age' => 32],
+     *      ['name' => 'Frank', 'age' => 40],
+     * ]);
+     *
+     * $people->pluck('name'); //=> ['Bob', 'Alice', 'Frank']
+     * $people->pluck('age', 'name'); //=> ['Bob' => 23, 'Alice' => 32, 'Frank' => 40]
+     * </code>
+     *
+     * @param string $valueAttribute
+     * @param string|null $keyAttribute
+     * @param bool $arrayAccess Determines whether to use array access ($elem[$prop]) or property access ($elem->$prop)
+     * @return static
+     */
+    public function pluck($valueAttribute, $keyAttribute = null, $arrayAccess = true);
+
+
+    // ----- Folding and reduction -----
+
+    /**
+     * Reduces the array into a single value by calling $callback on each element and the previous result.
+     *
+     * <code>
+     * Arr::wrap(range(1, 5))->fold(function ($sum, $element) { return $sum + $element; }, 0); //=> 15
+     * Arr::wrap(range(1, 5))->fold(function ($product, $element) { return $product * $element; }, 1); //=> 120
+     * Arr::wrap(['foo', 'bar', 'baz'])->fold(function ($res, $e) { return $res . $e; }); //=> 'foobarbaz'
+     * </code>
+     *
+     * @param callable $callback ($accumulator, $value, $key) -> mixed
+     * @param mixed $initial
+     * @return mixed
+     */
+    public function fold($callback, $initial = null);
+
+    /**
+     * Right-associative version of fold().
+     *
+     * <code>
+     * Arr::wrap(['foo', 'bar', 'baz'])->foldRight(function ($res, $e) { return $res . $e; }); //=> 'bazbarfoo'
+     * </code>
+     *
+     * @param callable $callback ($accumulator, $value, $key) -> mixed
+     * @param mixed $initial
+     * @return mixed
+     */
+    public function foldRight($callback, $initial = null);
+
+    // scan/scanRight
 
     /**
      * Flattens the array, combining elements of all sub-arrays into one array
@@ -528,65 +688,138 @@ interface ArrLike extends \ArrayAccess, \IteratorAggregate
      */
     public function flatten();
 
-    public function pluck($valueAttribute, $keyAttribute = null, $arrayAccess = true);
-
-    public function fold($callback, $initial = null);
-
-    public function foldRight($callback, $initial = null);
-
-
-    /**
-     * Returns two arrays: one with elements that satisfy the predicate, the other with elements that don't
-     *
-     * @param callable $predicate
-     * @return static[]
-     */
-    public function partition($predicate);
-
     /**
      * Finds the smallest element
      *
+     * <code>
+     * Arr::wrap([3, 1, 4, 2])->min(); //=> 1
+     * Arr::wrap(['tasty', 'big', 'cheeseburgers'])->min('mb_strlen'); //=> 'big'
+     * </code>
+     *
+     * @param callable|null $callback ($value, $key) -> number|string
      * @return mixed
      */
-    public function min();
+    public function min($callback = null);
 
     /**
      * Finds the largest element
      *
-     * @return mixed
-     */
-    public function max();
-
-    /**
-     * Finds the element for which the result of the callback is the smallest
+     * <code>
+     * Arr::wrap([3, 1, 4, 2])->max(); //=> 4
+     * Arr::wrap(['tasty', 'big', 'cheeseburgers'])->max('mb_strlen'); //=> 'cheeseburgers'
+     * </code>
      *
-     * @param callable $callback
+     * @param callable|null $callback ($value, $key) -> number|string
      * @return mixed
      */
-    public function minBy($callback);
-
-    /**
-     * Finds the element for which the result of the callback is the largest
-     *
-     * @param callable $callback
-     * @return mixed
-     */
-    public function maxBy($callback);
+    public function max($callback = null);
 
     /**
      * Returns the sum of all elements
      *
-     * @param callable $callback If given, sums the results of this callback over each element
+     * If a callback is given, sums the results of it over each element
+     *
+     * <code>
+     * Arr::wrap(range(1, 6))->sum(); //=> 21
+     * Arr::wrap(['tasty', 'big', 'cheeseburgers'])->sum('mb_strlen'); // => 21
+     * </code>
+     *
+     * @param null|callable $callback ($value, $key) -> number
      * @return number
      */
     public function sum($callback = null);
 
     /**
-     * @param array|Arr $array
-     * @param callable $callback
+     * Joins the array values into a string, separated by $separator
+     *
+     * <code>
+     * Arr::wrap(['tasty', 'big', 'cheeseburgers'])->join(' '); //=> 'tasty big cheeseburgers'
+     * </code>
+     *
+     * @param string $separator
+     * @return string
+     */
+    public function join($separator = '');
+
+
+    // ----- Splitting -----
+
+    /**
+     * Returns two arrays: one with elements that satisfy the predicate, the other with elements that don't
+     *
+     * Use in combination with built-in list() to easily access each array.
+     *
+     * <code>
+     * list ($divisibleBy3, $rest) = Arr::wrap(range(1, 9))->partition(function ($v) { return $v % 3 == 0; });
+     * //=> [3, 6, 9], [1, 2, 4, 5, 7, 8]
+     * </code>
+     *
+     * @param callable $predicate ($value, $key) -> bool
+     * @return static[]
+     */
+    public function partition($predicate);
+
+    /**
+     * Splits the array into chunks of $size
+     *
+     * @param int $size
+     * @param bool $preserveKeys
+     * @return static
+     */
+    public function chunk($size = 1, $preserveKeys = false);
+
+    /**
+     * Creates a sliding window of size $size, advancing $step elements on each iteration
+     *
+     * <code>
+     * $oneToFive = Arr::wrap(range(1, 5));
+     * $oneToFive->sliding(3); // [[1, 2, 3], [2, 3, 4], [3, 4, 5]]
+     * $oneToFive->sliding(4, 3); // [[1, 2, 3, 4], [4, 5]]
+     * </code>
+     *
+     * @param int $size
+     * @param int $step
+     * @return ArrLike
+     */
+    public function sliding($size, $step = 1);
+
+
+    // splitAt
+    // splitWhere
+    // span
+
+
+    // ----- Zipping -----
+
+    /**
+     * Zips the array with another
+     *
+     * <code>
+     * Arr::wrap(range(1, 5))->zip(range('a', 'e'));
+     * //=> [[1, 'a'], [2, 'b'], [3, 'c'], [4, 'd'], [5, 'e']]
+     * </code>
+     *
+     * @param array|ArrLike $array
+     * @return static
+     */
+    public function zip($array);
+
+    /**
+     * Zips the array with another using a function on each pair of elements
+     *
+     * <code>
+     * Arr::wrap(range('a', 'e'))->zipWith(range(1, 5), 'str_repeat');
+     * // => [a, bb, ccc, dddd, eeeee]
+     * </code>
+     *
+     * @param array|ArrLike $array
+     * @param callable $callback ($elemFromThis, $elemFromArray) -> mixed
      * @return static
      */
     public function zipWith($array, $callback);
+
+
+    // ----- Sorting -----
 
     /**
      * Sorts the array in-place
@@ -623,5 +856,27 @@ interface ArrLike extends \ArrayAccess, \IteratorAggregate
      * @return static
      */
     public function sortedBy($callbackOrKey, $mode = SORT_REGULAR);
+
+    /**
+     * Shuffles the array in-place
+     *
+     * @return static
+     */
+    public function shuffle();
+
+    /**
+     * Returns a shuffled copy of the array
+     *
+     * @return static
+     */
+    public function shuffled();
+
+
+    // ----- Methods for sorted arrays -----
+    // binarySearch
+    // insert
+
+
+    // lazy
 
 }

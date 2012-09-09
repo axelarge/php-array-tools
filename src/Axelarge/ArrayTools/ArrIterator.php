@@ -13,11 +13,13 @@ class ArrIterator implements Iterator
     }
 
     /**
+     * @param bool $recursive
      * @return array
      */
-    public function toArray()
+    public function toArray($recursive = false)
     {
-        return iterator_to_array($this);
+        $array = iterator_to_array($this);
+        return $recursive ? array_map(function (ArrLike $e) { return $e->toArray(); }, $array) : $array;
     }
 
     /**
@@ -27,7 +29,7 @@ class ArrIterator implements Iterator
      */
     public function current()
     {
-        return new Arr($this->iterator->current());
+        return new WrappedArray($this->iterator->current());
     }
 
     /**

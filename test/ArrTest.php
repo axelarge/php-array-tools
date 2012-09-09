@@ -245,8 +245,10 @@ class ArrTest extends \PHPUnit_Framework_TestCase
     public function testRepeat()
     {
         $arr = Arr::range(1, 3);
-        $this->assertEquals(array(1, 2, 3, 1, 2, 3, 1, 2, 3), $arr->dup()->repeat(3)->toArray());
-        $this->assertEquals(array(), $arr->dup()->repeat(0)->toArray());
+        $this->assertEquals(array(1, 2, 3, 1, 2, 3, 1, 2, 3), $arr->repeat(3)->toArray());
+        $this->assertEquals(array(), $arr->repeat(0)->toArray(), 'Repeating 0 times yields empty array');
+        $this->assertEquals(array(1, 2, 3, 1, 2, 3, 1, 2, 3), Arr::repeat(range(1, 3), 3));
+        $this->assertEquals(array(), Arr::repeat(range(1, 3), 0));
     }
 
 

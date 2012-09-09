@@ -250,7 +250,7 @@ class Arr
      * @param int $n
      * @return array
      */
-    public function repeat($array, $n)
+    public static function repeat($array, $n)
     {
         $result = array();
         while ($n-- > 0) {

@@ -28,9 +28,9 @@ class WrappedArray implements ArrLike
     {
         if (!$recursive) return $this->arr;
 
-        return Arr::map($this->arr, function ($x) {
+        return array_map(function ($x) {
             return $x instanceof ArrLike ? $x->toArray(true) : $x;
-        });
+        }, $this->arr);
     }
 
     /**
@@ -520,6 +520,12 @@ class WrappedArray implements ArrLike
     }
 
     /** @inheritdoc */
+    public function filterWithKey($predicate)
+    {
+        return new static(Arr::filterWithKey($this->arr, $predicate));
+    }
+
+    /** @inheritdoc */
     public function map($callback)
     {
         return new static(array_map($callback, $this->arr));
@@ -556,9 +562,21 @@ class WrappedArray implements ArrLike
     }
 
     /** @inheritdoc */
+    public function foldWithKey($callback, $initial = null)
+    {
+        return Arr::foldWithKey($this->arr, $callback, $initial);
+    }
+
+    /** @inheritdoc */
     public function foldRight($callback, $initial = null)
     {
         return array_reduce(array_reverse($this->arr, true), $callback, $initial);
+    }
+
+    /** @inheritdoc */
+    public function foldRightWithKey($callback, $initial = null)
+    {
+        return Arr::foldRightWithKey($this->arr, $callback, $initial);
     }
 
     /** @inheritdoc */

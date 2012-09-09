@@ -544,6 +544,12 @@ class ArrTest extends \PHPUnit_Framework_TestCase
             'Filter with callback',
             0, 0, true
         );
+        $this->assertEquals(
+            array(1, 3),
+            Arr::range(1, 8)->filterWithKey(function ($v, $k) { return $v % 2 && $k < 4; })->toArray(),
+            'Filter with key',
+            0, 0, true
+        );
     }
 
     public function testSample()
@@ -568,19 +574,13 @@ class ArrTest extends \PHPUnit_Framework_TestCase
         );
 
         $this->assertEquals(
-            array('A' => 4, 'B' => 5, 'C' => 6),
-            Arr::map(
-                array('a' => 1, 'b' => 2, 'c' => 3),
-                function ($v, $k) { return array(strtoupper($k), $v + 3); },
-                true
-            )
+            array('a' => 'a1', 'b' => 'b2', 'c' => 'c3'),
+            Arr::wrap(array('a' => 1, 'b' => 2, 'c' => 3))->mapWithKey(function ($v, $k) { return $k.$v; })->toArray()
         );
 
         $this->assertEquals(
-            array('A' => 4, 'B' => 5, 'C' => 6),
-            Arr::wrap(array('a' => 1, 'b' => 2, 'c' => 3))
-                ->mapWithKey(function ($v, $k) { return array(strtoupper($k), $v + 3); }, true)
-                ->toArray()
+            array('a' => 'a1', 'b' => 'b2', 'c' => 'c3'),
+            Arr::mapWithKey(array('a' => 1, 'b' => 2, 'c' => 3), function ($v, $k) { return $k.$v; })
         );
     }
 
@@ -609,15 +609,19 @@ class ArrTest extends \PHPUnit_Framework_TestCase
     public function testFold()
     {
         $concat = function ($r, $e) { return $r.$e; };
+        $triple = function ($acc, $v, $k) { return $acc.$k.$v; };
 
         $this->assertEquals('123', Arr::range(1, 3)->fold($concat), 'left fold with default initial');
         $this->assertEquals('0123', Arr::range(1, 3)->fold($concat, '0'), 'left fold with custom initializer');
+        $this->assertEquals('0a1b2c', Arr::range('a', 'c')->foldWithKey($triple), 'fold with keys');
 
         $this->assertEquals('321', Arr::foldRight(range(1, 3), $concat), 'static right fold with default initial');
         $this->assertEquals('0321', Arr::foldRight(range(1, 3), $concat, '0'), 'static right fold with custom initial');
+        $this->assertEquals('2c1b0a', Arr::foldRightWithKey(range('a', 'c'), $triple), 'static right fold with keys');
 
         $this->assertEquals('321', Arr::range(1, 3)->foldRight($concat), 'right fold with default initial');
         $this->assertEquals('0321', Arr::range(1, 3)->foldRight($concat, '0'), 'right fold with custom initial');
+        $this->assertEquals('2c1b0a', Arr::range('a', 'c')->foldRightWithKey($triple), 'right fold with keys');
     }
 
     public function testSum()

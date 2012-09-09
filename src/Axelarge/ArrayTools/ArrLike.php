@@ -558,10 +558,19 @@ interface ArrLike extends ArrayAccess, IteratorAggregate
     /**
      * Filters the array by a predicate
      *
-     * @param callable $predicate If null, checks if the value is not empty
+     * @param callable|null $predicate ($value) -> bool If null, checks if the value is not empty
      * @return static
      */
     public function filter($predicate = null);
+
+    /**
+     * Filters the array by a predicate
+     * Like filter() but also passes in the key of each element
+     *
+     * @param callable $predicate ($value, $key) -> bool
+     * @return static
+     */
+    public function filterWithKey($predicate);
 
     /**
      * Returns unique values of the array
@@ -586,11 +595,9 @@ interface ArrLike extends ArrayAccess, IteratorAggregate
      *
      * <code>
      * Arr::wrap([2, 3, 4])->map(function ($x) { return $x * $x; }); //=> [3, 9, 16]
-//     * Arr::wrap(['Bob' => 23, 'Alice' => 23])->map(function ($age, $name) { return "$name is $age years old"; });
-//     * //=> [3, 9, 16]
      * </code>
      *
-     * @param callable $callback
+     * @param callable $callback ($value) -> $newValue
      * @return static
      */
     public function map($callback);
@@ -600,8 +607,9 @@ interface ArrLike extends ArrayAccess, IteratorAggregate
      * If $createKeys is set to true, the callback should return an array with the key and value for the new element
      *
      * <code>
-     * Arr::wrap(['a' => 1, 'b' => 2, 'c' => 3])->mapWithKey(function ($v, $k) { return [strtoupper($k), $v + 3]; }, true);
-     * //=> ['A' => 4, 'B' => 5, 'C' => 6]
+     * $friends = ['Bob' => ['age' => 34, 'surname' => 'Hope'], 'Alice' => ['age' => 23, 'surname' => 'Miller']];
+     * Arr::wrap($friends)->mapWithKey(function ($v, $k) { return "$v is {$k['age']} years old"; });
+     * //=> ['Bob is 34 years old', 'Alice is 23 years old']
      * </code>
      *
      * @param callable $callback
@@ -619,7 +627,7 @@ interface ArrLike extends ArrayAccess, IteratorAggregate
      * </code>
      *
      * @param callable $callback ($value, $key) -> array
-     * @return array array
+     * @return array static
      */
     public function flatMap($callback);
 
@@ -656,24 +664,43 @@ interface ArrLike extends ArrayAccess, IteratorAggregate
      * Arr::wrap(['foo', 'bar', 'baz'])->fold(function ($res, $e) { return $res . $e; }); //=> 'foobarbaz'
      * </code>
      *
-     * @param callable $callback ($accumulator, $value, $key) -> mixed
+     * @param callable $callback ($accumulator, $value) -> mixed
      * @param mixed $initial
      * @return mixed
      */
     public function fold($callback, $initial = null);
 
     /**
-     * Right-associative version of fold().
-     *
-     * <code>
-     * Arr::wrap(['foo', 'bar', 'baz'])->foldRight(function ($res, $e) { return $res . $e; }); //=> 'bazbarfoo'
-     * </code>
+     * Reduces the array into a single value by calling $callback on each element and the previous result.
+     * Like fold(), but also passes the key as the third argument.
      *
      * @param callable $callback ($accumulator, $value, $key) -> mixed
      * @param mixed $initial
      * @return mixed
      */
+    public function foldWithKey($callback, $initial = null);
+
+    /**
+     * Right-associative version of fold()
+     *
+     * <code>
+     * Arr::wrap(['foo', 'bar', 'baz'])->foldRight(function ($res, $e) { return $res . $e; }); //=> 'bazbarfoo'
+     * </code>
+     *
+     * @param callable $callback ($accumulator, $value) -> mixed
+     * @param mixed $initial
+     * @return mixed
+     */
     public function foldRight($callback, $initial = null);
+
+    /**
+     * Right-associative version of foldWithKey()
+     *
+     * @param callable $callback ($accumulator, $value, $key) -> mixed
+     * @param mixed $initial
+     * @return mixed
+     */
+    public function foldRightWithKey($callback, $initial = null);
 
     // scan/scanRight
 

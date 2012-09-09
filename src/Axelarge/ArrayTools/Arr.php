@@ -59,7 +59,7 @@ class Arr
     public static function toString($array, $showKeys = null)
     {
         $idx = 0;
-        return sprintf('[%s]', implode(', ', static::map($array, function ($v, $k) use (&$idx, $showKeys) {
+        return sprintf('[%s]', implode(', ', static::mapWithKey($array, function ($v, $k) use (&$idx, $showKeys) {
             $str = ($showKeys === null && $idx++ === $k || $showKeys === false) ? '' : "$k => ";
 
             if (is_array($v)) $str .= Arr::toString($v, $showKeys);
@@ -502,6 +502,25 @@ class Arr
     // ----- Filtering -----
 
     /**
+     * Keeps only those elements that satisfy the $predicate
+     *
+     * Differs from array_filter() in that the key of each element is also passed to the predicate.
+     *
+     * @param array $array
+     * @param callable $predicate ($value, $key) -> bool
+     * @return array
+     */
+    public static function filterWithKey($array, $predicate)
+    {
+        $result = array();
+        foreach ($array as $key => $value) {
+            if ($predicate($value, $key)) $result[$key] = $value;
+        }
+
+        return $result;
+    }
+
+    /**
      * Returns $size random elements from the array or a single element if $size is null
      *
      * This function differs from array_rand() in that it returns an array with a single element if $size is 1.
@@ -661,6 +680,26 @@ class Arr
 
     // ----- Folding and reduction -----
 
+    /**
+     * Reduces the array into a single value by calling $callback repeatedly on the elements and their keys, passing the resulting value along each time.
+     *
+     * <code>
+     * Arr::foldRight(['foo', 'bar', 'baz'], function ($res, $v, $k) { return "$res $k:$e"; }); //=> ' 0:foo 1:bar 2:baz'
+     * </code>
+     *
+     * @param array $array
+     * @param callable $callback ($accumulator, $value, $key) -> mixed
+     * @param mixed $initial
+     * @return mixed
+     */
+    public static function foldWithKey($array, $callback, $initial = null)
+    {
+        foreach ($array as $key => $value) {
+            $initial = $callback($initial, $value, $key);
+        }
+
+        return $initial;
+    }
 
     /**
      * Right-associative version of array_reduce().
@@ -677,6 +716,23 @@ class Arr
     public static function foldRight($array, $callback, $initial = null)
     {
         return array_reduce(array_reverse($array, true), $callback, $initial);
+    }
+
+    /**
+     * Right-associative version of foldWithKey()
+     *
+     * <code>
+     * Arr::foldRight(['foo', 'bar', 'baz'], function ($res, $v, $k) { return "$res $v:$k"; }); //=> ' 2:baz 1:bar 0:foo'
+     * </code>
+     *
+     * @param array $array
+     * @param callable $callback ($accumulator, $value, $key) -> mixed
+     * @param mixed $initial
+     * @return mixed
+     */
+    public static function foldRightWithKey($array, $callback, $initial = null)
+    {
+        return self::foldWithKey(array_reverse($array, true), $callback, $initial);
     }
 
     /**

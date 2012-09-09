@@ -95,21 +95,6 @@ class Arr
         }
     }
 
-    /**
-     * Traverses the array in reverse order and invokes $callback for each element and its key
-     *
-     * @param array $array
-     * @param callable $callback Will receive ($value, $key). The return value is ignored
-     */
-    public static function reverseEach($array, $callback)
-    {
-        $value = end($array);
-        while (null !== $key = key($array)) {
-            $callback($value, $key);
-            $value = prev($array);
-        }
-    }
-
 
     // ----- Single element access -----
 
@@ -294,13 +279,7 @@ class Arr
      */
     public static function findLast($array, $predicate, $default = null)
     {
-        $value = end($array);
-        while (null !== $key = key($array)) {
-            if ($predicate($value, $key)) return $value;
-            $value = prev($array);
-        }
-
-        return $default;
+        return self::find(array_reverse($array, true), $predicate, $default);
     }
 
     /**
@@ -330,24 +309,13 @@ class Arr
      */
     public static function findLastKey($array, $predicate)
     {
-        $value = end($array);
-        while (null !== $key = key($array)) {
-            if ($predicate($value, $key)) return $key;
-            $value = prev($array);
-        }
-
-        return null;
+        return self::findKey(array_reverse($array, true), $predicate);
     }
 
     public static function lastIndexOf($array, $value, $strict = true)
     {
-        $item = end($array);
-        while (null !== $key = key($array)) {
-            if ($strict ? ($item === $value) : ($item == $value)) return $key;
-            $item = prev($array);
-        }
-
-        return null;
+        $index = array_search($value, array_reverse($array, true), $strict);
+        return $index === false ? null : $index;
     }
 
 
@@ -708,13 +676,7 @@ class Arr
      */
     public static function foldRight($array, $callback, $initial = null)
     {
-        $value = end($array);
-        while (null !== $key = key($array)) {
-            $initial = $callback($initial, $value, $key);
-            $value = prev($array);
-        }
-
-        return $initial;
+        return array_reduce(array_reverse($array, true), $callback, $initial);
     }
 
     /**

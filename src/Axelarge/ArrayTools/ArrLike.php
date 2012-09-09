@@ -84,19 +84,6 @@ interface ArrLike extends ArrayAccess, IteratorAggregate
     public function eachWithIndex($callback);
 
     /**
-     * Traverses the array in reverse order and invokes $callback for each element and its key
-     *
-     * <code>
-     * Arr::range(1, 5)->reverseEach(function ($x) { echo "$x "; });
-     * // outputs "5 4 3 2 1 "
-     * </code>
-     *
-     * @param callable $callback Will receive ($value, $key). The return value is ignored
-     * @return static $this
-     */
-    public function reverseEach($callback);
-
-    /**
      * Invokes a callback passing $this as the argument, ignoring the return value.
      *
      * Useful for debugging in the middle of a chain.

@@ -92,14 +92,6 @@ class WrappedArray implements ArrLike
     }
 
     /** @inheritdoc */
-    public function reverseEach($callback)
-    {
-        Arr::reverseEach($this->arr, $callback);
-        return $this;
-    }
-
-
-    /** @inheritdoc */
     public function tap($callback)
     {
         $callback($this);
@@ -566,7 +558,7 @@ class WrappedArray implements ArrLike
     /** @inheritdoc */
     public function foldRight($callback, $initial = null)
     {
-        return array_reduce(array_reverse($this->arr), $callback, $initial);
+        return array_reduce(array_reverse($this->arr, true), $callback, $initial);
     }
 
     /** @inheritdoc */

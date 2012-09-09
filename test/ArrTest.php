@@ -62,17 +62,6 @@ class ArrTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('a:0 b:1 c:2 ', $s);
     }
 
-    public function testReverseEach()
-    {
-        $s = '';
-        Arr::reverseEach(range(1, 3), function ($v, $k) use (&$s) { $s .= "$v:$k "; });
-        $this->assertEquals('3:2 2:1 1:0 ', $s, 'Static version');
-
-        $s = '';
-        Arr::range(1, 3)->reverseEach(function ($v, $k) use (&$s) { $s .= "$v:$k "; });
-        $this->assertEquals('3:2 2:1 1:0 ', $s);
-    }
-
 
     // ----- Single element access -----
 

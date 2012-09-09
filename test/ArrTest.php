@@ -644,12 +644,12 @@ class ArrTest extends \PHPUnit_Framework_TestCase
     public function testChunk()
     {
         $this->assertEquals(
-            array(
-                Arr::create(1, 2),
-                Arr::create(3, 4),
-                Arr::create(5, 6),
-            ),
-            Arr::wrap(range(1, 6))->chunk(2)->toArray()
+            array(array(1, 2), array(3, 4), array(5, 6)),
+            Arr::wrap(range(1, 6))->chunk(2)->toArray(true)
+        );
+        $this->assertEquals(
+            array(array(1, 2), array(3, 4), array(5)),
+            Arr::wrap(range(1, 5))->chunk(2)->toArray(true)
         );
     }
 

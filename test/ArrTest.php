@@ -41,6 +41,41 @@ class ArrTest extends \PHPUnit_Framework_TestCase
         $this->assertNotEquals($arr->toArray(), $dup->toArray(), 'Modifying copy does not change the original');
     }
 
+
+    // ----- Traversal -----
+
+    public function testEach()
+    {
+        $s = '';
+        Arr::range('a', 'c')->each(function ($v, $k) use (&$s) { $s .= "$v:$k "; });
+        $this->assertEquals('a:0 b:1 c:2 ', $s);
+    }
+
+    public function testEachWithIndex()
+    {
+        $s = '';
+        Arr::eachWithIndex(range('a', 'c'), function ($v, $k) use (&$s) { $s .= "$v:$k "; });
+        $this->assertEquals('a:0 b:1 c:2 ', $s, 'Static version');
+
+        $s = '';
+        Arr::range('a', 'c')->eachWithIndex(function ($v, $k) use (&$s) { $s .= "$v:$k "; });
+        $this->assertEquals('a:0 b:1 c:2 ', $s);
+    }
+
+    public function testReverseEach()
+    {
+        $s = '';
+        Arr::reverseEach(range(1, 3), function ($v, $k) use (&$s) { $s .= "$v:$k "; });
+        $this->assertEquals('3:2 2:1 1:0 ', $s, 'Static version');
+
+        $s = '';
+        Arr::range(1, 3)->reverseEach(function ($v, $k) use (&$s) { $s .= "$v:$k "; });
+        $this->assertEquals('3:2 2:1 1:0 ', $s);
+    }
+
+
+    // ----- Single element access -----
+
     protected static function getDeeplyNestedArray()
     {
         return array(

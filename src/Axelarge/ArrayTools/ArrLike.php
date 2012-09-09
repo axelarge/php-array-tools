@@ -61,6 +61,14 @@ interface ArrLike extends ArrayAccess, IteratorAggregate
     // ----- Traversal -----
 
     /**
+     * Invokes $callback for each element and its key in the array.
+     *
+     * @param callable $callback Will receive ($value, $key). The return value is ignored
+     * @return static
+     */
+    public function each($callback);
+
+    /**
      * Runs a callback for each element in the array
      *
      * Passes the element as the first argument and an incrementing index as the second
@@ -70,18 +78,23 @@ interface ArrLike extends ArrayAccess, IteratorAggregate
      * // outputs "0 a 1 b 2 c "
      * </code>
      *
-     * @param callable $callback
+     * @param callable $callback Will receive ($value, $key). The return value is ignored
      * @return static
      */
     public function eachWithIndex($callback);
 
     /**
-     * Runs a callback for each key-value pair in the array
+     * Traverses the array in reverse order and invokes $callback for each element and its key
      *
-     * @param callable $callback
-     * @return static
+     * <code>
+     * Arr::range(1, 5)->reverseEach(function ($x) { echo "$x "; });
+     * // outputs "5 4 3 2 1 "
+     * </code>
+     *
+     * @param callable $callback Will receive ($value, $key). The return value is ignored
+     * @return static $this
      */
-    public function eachPair($callback);
+    public function reverseEach($callback);
 
     /**
      * Invokes a callback passing $this as the argument, ignoring the return value.

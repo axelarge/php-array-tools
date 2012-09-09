@@ -95,6 +95,21 @@ class Arr
         }
     }
 
+    /**
+     * Traverses the array in reverse order and invokes $callback for each element and its key
+     *
+     * @param array $array
+     * @param callable $callback Will receive ($value, $key). The return value is ignored
+     */
+    public static function reverseEach($array, $callback)
+    {
+        $value = end($array);
+        while (null !== $key = key($array)) {
+            $callback($value, $key);
+            $value = prev($array);
+        }
+    }
+
 
     // ----- Single element access -----
 

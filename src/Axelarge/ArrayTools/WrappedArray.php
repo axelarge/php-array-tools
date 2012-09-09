@@ -73,13 +73,31 @@ class WrappedArray implements ArrLike
     }
 
     /** @inheritdoc */
-    public function eachPair($callback)
+    public function each($callback)
     {
         foreach ($this->arr as $key => $value) {
-            $callback($key, $value);
+            $callback($value, $key);
         }
         return $this;
     }
+
+    /**
+     * @deprecated Use each() with flipped argument order
+     * @param callable $callback
+     * @return static
+     */
+    public function eachPair($callback)
+    {
+        return $this->each(function ($v, $k) use ($callback) { $callback($k, $v); });
+    }
+
+    /** @inheritdoc */
+    public function reverseEach($callback)
+    {
+        Arr::reverseEach($this->arr, $callback);
+        return $this;
+    }
+
 
     /** @inheritdoc */
     public function tap($callback)

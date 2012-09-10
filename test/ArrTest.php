@@ -603,6 +603,23 @@ class ArrTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(array('Alice' => 33, 'Bob' => 29, 'Harry' => 33), $wrap->pluck('age', 'name')->toArray());
     }
 
+    public function testMapToAssoc()
+    {
+        $this->assertEquals(
+            array('A' => 4, 'B' => 5, 'C' => 6),
+            Arr::mapToAssoc(
+                array('a' => 1, 'b' => 2, 'c' => 3),
+                function ($v, $k) { return array(strtoupper($k), $v + 3); }
+            )
+        );
+
+        $this->assertEquals(
+            array('A' => 4, 'B' => 5, 'C' => 6),
+            Arr::wrap(array('a' => 1, 'b' => 2, 'c' => 3))
+                ->mapToAssoc(function ($v, $k) { return array(strtoupper($k), $v + 3); })
+                ->toArray()
+        );
+    }
 
     // ----- Folding and reduction -----
 

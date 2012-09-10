@@ -532,15 +532,21 @@ class WrappedArray implements ArrLike
     }
 
     /** @inheritdoc */
-    public function mapWithKey($callback, $createKeys = false)
+    public function mapWithKey($callback)
     {
-        return new static(Arr::map($this->arr, $callback, $createKeys));
+        return new static(Arr::mapWithKey($this->arr, $callback));
     }
 
     /** @inheritdoc */
     public function flatMap($callback)
     {
         return new static(Arr::flatMap($this->arr, $callback));
+    }
+
+    /** @inheritdoc */
+    public function mapToAssoc($callback)
+    {
+        return new static(Arr::mapToAssoc($this->arr, $callback));
     }
 
     /** @inheritdoc */

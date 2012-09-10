@@ -604,7 +604,6 @@ interface ArrLike extends ArrayAccess, IteratorAggregate
 
     /**
      * Map the array into another, applying $callback to each element and it's key.
-     * If $createKeys is set to true, the callback should return an array with the key and value for the new element
      *
      * <code>
      * $friends = ['Bob' => ['age' => 34, 'surname' => 'Hope'], 'Alice' => ['age' => 23, 'surname' => 'Miller']];
@@ -612,11 +611,10 @@ interface ArrLike extends ArrayAccess, IteratorAggregate
      * //=> ['Bob is 34 years old', 'Alice is 23 years old']
      * </code>
      *
-     * @param callable $callback
-     * @param bool $createKeys
+     * @param callable $callback ($value, $key) -> $newValue
      * @return static
      */
-    public function mapWithKey($callback, $createKeys = false);
+    public function mapWithKey($callback);
 
     /**
      * Maps an array into another by applying $callback to each element and flattening the results
@@ -651,6 +649,20 @@ interface ArrLike extends ArrayAccess, IteratorAggregate
      * @return static
      */
     public function pluck($valueAttribute, $keyAttribute = null, $arrayAccess = true);
+
+    /**
+     * Creates an associative array by invoking $callback on each element and using the 2 resulting values as key and value
+     *
+     * <code>
+     * $friends = [['name' => 'Bob', 'surname' => 'Hope', 'age' => 34], ['name' => 'Alice', 'surname' => 'Miller', 'age' => 23]];
+     * Arr::wrap($friends)->mapToAssoc(function ($v, $k) { return [$v['name'].' '.$v['surname'], $v['age']] });
+     * //=> ['Bob Hope' => 34, 'Alice Miller' => 23]
+     * </code>
+     *
+     * @param callable $callback ($value, $key) -> array($newKey, $newValue)
+     * @return static
+     */
+    public function mapToAssoc($callback);
 
 
     // ----- Folding and reduction -----

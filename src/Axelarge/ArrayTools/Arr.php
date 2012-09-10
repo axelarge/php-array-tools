@@ -542,49 +542,26 @@ class Arr
     /**
      * Map the collection into another, applying $callback to each element and its key.
      *
-     * If $createKeys is set to true, the callback should return an array with the key and value for the new element.
      * This function differs from the built-in array_map() in that it also passes the key as a
      * second element to the callback.
      *
      * <code>
      * Arr::map(['a' => 1, 'b' => 2, 'c' => 3], function ($v) { return $v * 2; });
      * //=> ['a' => 2, 'b' => 4, 'c' => 6]
-     * Arr::map(['a' => 1, 'b' => 2, 'c' => 3], function ($v, $k) { return [strtoupper($k), $v + 3]; }, true);
-     * //=> ['A' => 4, 'B' => 5, 'C' => 6]
      * </code>
      *
      * @param array $array
      * @param callable $callback
-     * @param bool $createKeys
      * @return array
      */
-    public static function map($array, $callback, $createKeys = false)
+    public static function mapWithKey($array, $callback)
     {
         $mapped = array();
-        if ($createKeys) {
-            foreach ($array as $key => $value) {
-                list($newKey, $newValue) = $callback($value, $key);
-                $mapped[$newKey] = $newValue;
-            }
-        } else {
-            foreach ($array as $key => $value) {
-                $mapped[$key] = $callback($value, $key);
-            }
+        foreach ($array as $key => $value) {
+            $mapped[$key] = $callback($value, $key);
         }
 
         return $mapped;
-    }
-
-    /**
-     * @deprecated Use map() instead
-     * @param $array
-     * @param $callback
-     * @param bool $createKeys
-     * @return array
-     */
-    public static function mapWithKey($array, $callback, $createKeys = false)
-    {
-        return static::map($array, $callback, $createKeys);
     }
 
     /**
@@ -660,6 +637,30 @@ class Arr
         }
 
         return $result;
+    }
+
+    /**
+     * Creates an associative array by invoking $callback on each element and using the 2 resulting values as key and value
+     *
+     * <code>
+     * $friends = [['name' => 'Bob', 'surname' => 'Hope', 'age' => 34], ['name' => 'Alice', 'surname' => 'Miller', 'age' => 23]];
+     * Arr::mapToAssoc($friends, function ($v, $k) { return [$v['name'].' '.$v['surname'], $v['age']] });
+     * //=> ['Bob Hope' => 34, 'Alice Miller' => 23]
+     * </code>
+     *
+     * @param array $array
+     * @param callable $callback ($value, $key) -> array($newKey, $newValue)
+     * @return array
+     */
+    public static function mapToAssoc($array, $callback)
+    {
+        $mapped = array();
+        foreach ($array as $key => $value) {
+            list($newKey, $newValue) = $callback($value, $key);
+            $mapped[$newKey] = $newValue;
+        }
+
+        return $mapped;
     }
 
     /**

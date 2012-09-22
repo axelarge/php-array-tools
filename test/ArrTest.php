@@ -92,6 +92,7 @@ class ArrTest extends \PHPUnit_Framework_TestCase
             array($nested, array('foo', 'bar'), 'd', 'd', 'Default value is returned for non-existing array key'),
             array($nested, 'a.b.c', null, array(1, 2, 3), "Keys don't have to point to leaf elements"),
             array($nested, null, null, $nested, 'Passing null yields the whole array'),
+            array($nested, 'a.a.a',  'd', 'd', 'If intermediate key is present but not an array, returns default'),
         );
     }
 

@@ -23,7 +23,7 @@ class WrappedArray implements ArrLike
     }
 
 
-    /** @inheritdoc */
+		/** @inheritdoc */
     public function toArray($recursive = false)
     {
         if (!$recursive) return $this->arr;
@@ -138,7 +138,7 @@ class WrappedArray implements ArrLike
         return $this;
     }
 
-    /** @inheritdoc */
+	/** @inheritdoc */
     public function getNested($keys, $default = null)
     {
         return Arr::getNested($this->arr, $keys, $default);
@@ -279,6 +279,24 @@ class WrappedArray implements ArrLike
     {
         return in_array($value, $this->arr, $strict);
     }
+
+		/** @inheritdoc */
+		public function contains($value, $strict = true)
+		{
+				return $this->hasValue($value, $strict);
+		}
+
+		/** @inheritdoc */
+		public function removeElement($element, $strict = true)
+		{
+				if ($this->hasValue($element, $strict))
+				{
+					$index = $this->indexOf($element, $strict);
+					if (null !== $index) $this->offsetUnset($index);
+				}
+
+				return $this;
+		}
 
     /** @inheritdoc */
     public function length()

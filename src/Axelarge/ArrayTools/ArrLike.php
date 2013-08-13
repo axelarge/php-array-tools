@@ -278,6 +278,23 @@ interface ArrLike extends ArrayAccess, IteratorAggregate
      */
     public function hasValue($value, $strict = true);
 
+		/**
+     * Checks if the value exists in the array. Alias for hasKey
+     *
+     * @param mixed $value
+     * @param bool $strict Whether to use strict comparison for determining equality
+     * @return bool
+     */
+		public function contains($value, $strict = true);
+
+		/**
+		 * Remove value from array
+		 * @param mixed $element
+		 * @param bool $strict
+		 * @return static
+		 */
+		public function removeElement($element, $strict = true);
+
     // hasSlice/containsSlice
     // indexOfSlice/lastIndexOfSlice
 
